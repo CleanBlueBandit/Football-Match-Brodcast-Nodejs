@@ -132,13 +132,3 @@ See `db/schema.sql`. Tables:
 - `app_state` — single-row JSONB blob, replaces `state.json`
 - `session` — required by `connect-pg-simple` for server-side session storage
 
-## Notes / things you'll want to tighten before production
-
-- Add rate limiting on `/api/login` (the old code had none either, but Node
-  makes this easy with something like `express-rate-limit`).
-- Put the app behind HTTPS/TLS termination (nginx, Caddy, or a platform LB)
-  and set `NODE_ENV=production` so cookies get `secure: true`.
-- If you deploy multiple Node instances, the in-memory `state` object in
-  `ws/index.js` is per-process — you'd want to move broadcast to a shared
-  pub/sub (e.g. Postgres `LISTEN/NOTIFY` or Redis) so all instances see the
-  same live state.
