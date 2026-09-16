@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Football Broadcast</title>
+  <link rel="stylesheet" href="tv.css">
+</head>
+<body id="tv-page">
+
+  <!-- Main scorebug -->
+  <div id="scorebug">
+    <span id="sb-home-name" class="scorebug-team">HOME</span>
+    <span id="sb-home-score" class="scorebug-score">0</span>
+    <span id="sb-time" class="scorebug-time">00:00</span>
+    <span id="sb-away-score" class="scorebug-score">0</span>
+    <span id="sb-away-name" class="scorebug-team">AWAY</span>
+    <span id="sb-added" class="added-time" style="display:none"></span>
+  </div>
+
+  <!-- Added time shown separately when no other graphic is active -->
+  <div id="external-time" style="display:none">
+    <span id="external-added">+0</span>
+  </div>
+
+  <!-- Goal lower third -->
+  <div id="goal-overlay" class="overlay lower-third">
+    <div class="goal-title">GOAL!</div>
+    <div id="g-team" class="goal-team">HOME</div>
+    <div id="g-scorer" class="goal-player"></div>
+    <div id="g-assist" class="goal-assist"></div>
+  </div>
+
+  <!-- Possession -->
+  <div id="possession-overlay" class="overlay lower-third">
+    <div class="goal-title" style="font-size:34px;">POSSESSION</div>
+    <div class="possession-bars">
+      <div id="p-home" class="possession-home" style="width:50%"></div>
+      <div id="p-away" class="possession-away" style="width:50%"></div>
+    </div>
+    <div class="possession-labels">
+      <span id="p-home-text">HOME 50%</span>
+      <span id="p-away-text">50% AWAY</span>
+    </div>
+  </div>
+
+  <!-- Fouls -->
+  <div id="fouls-overlay" class="overlay lower-third">
+    <div class="goal-title" style="font-size:34px;">FOULS</div>
+    <div class="possession-labels">
+      <span><span id="f-home-name">HOME</span>: <strong id="f-home-val">0</strong></span>
+      <span><span id="f-away-name">AWAY</span>: <strong id="f-away-val">0</strong></span>
+    </div>
+  </div>
+
+  <!-- Card -->
+  <div id="card-overlay" class="overlay popup">
+    <div id="c-icon" class="card-icon card-yellow"></div>
+    <div id="c-team" class="goal-team">HOME</div>
+    <div id="c-player" class="goal-player"></div>
+    <div id="c-type" class="goal-assist">yellow card</div>
+  </div>
+
+  <!-- Substitution -->
+  <div id="sub-overlay" class="overlay lower-third">
+    <div class="goal-title" style="font-size:34px;">SUBSTITUTION</div>
+    <div id="s-team" class="goal-team">HOME</div>
+    <div class="possession-labels" style="margin-top:14px;">
+      <span>OUT: <strong id="s-out"></strong></span>
+      <span>IN: <strong id="s-in"></strong></span>
+    </div>
+  </div>
+
+  <!-- VAR -->
+  <div id="var-overlay" class="overlay var-banner">
+    <div id="var-inner" class="var-inner">
+      <div id="var-main" class="var-main">VAR CHECK IN PROGRESS</div>
+      <div id="var-sub" class="var-sub"></div>
+    </div>
+  </div>
+
+  <!-- Formations -->
+  <div id="formations-overlay" class="overlay fullscreen">
+    <div class="formation-box">
+      <h3 id="f-home-title">HOME</h3>
+      <div id="formation-home" class="pitch"></div>
+    </div>
+    <div class="formation-box">
+      <h3 id="f-away-title">AWAY</h3>
+      <div id="formation-away" class="pitch"></div>
+    </div>
+  </div>
+
+  <!-- League table -->
+  <div id="table-overlay" class="overlay side-panel">
+    <h2 style="margin:0 0 12px; text-align:center; text-transform:uppercase;">League Table</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Pos</th>
+          <th>Team</th>
+          <th>P</th>
+          <th>Pts</th>
+        </tr>
+      </thead>
+      <tbody id="table-body"></tbody>
+    </table>
+  </div>
+
+  <!-- Goal history -->
+  <div id="goal-history-overlay" class="overlay side-panel">
+    <h2 style="margin:0 0 18px; text-align:center; text-transform:uppercase;">Goal History</h2>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:30px;">
+      <div>
+        <h3 id="gh-home-team" style="margin:0 0 10px; color:var(--home-color);"></h3>
+        <div id="goal-history-home"></div>
+      </div>
+      <div>
+        <h3 id="gh-away-team" style="margin:0 0 10px; color:var(--away-color);"></h3>
+        <div id="goal-history-away"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Referee / quick-call graphics -->
+  <div id="offside-overlay" class="overlay popup small-ref">OFFSIDE</div>
+  <div id="penalty-overlay" class="overlay popup small-ref">PENALTY</div>
+  <div id="handball-overlay" class="overlay popup small-ref">HANDBALL</div>
+
+  <!-- Advantage is intentionally a smaller bug -->
+  <div id="advantage-overlay" class="overlay small-bug">ADVANTAGE</div>
+
+  <!-- Replay watermark -->
+  <div id="replay-overlay" class="overlay watermark">REPLAY</div>
+
+  <script src="tv.js"></script>
+</body>
+</html>

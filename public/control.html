@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Broadcast Control</title>
+<link rel="stylesheet" href="control.css">
+</head>
+<body id="control-page">
+  <header>
+    <h1>Broadcast Control Panel</h1>
+    <span id="ws-status" class="ws-status">connecting…</span>
+  </header>
+  <main class="dashboard">
+    <section class="panel">
+      <h2>Match Control</h2>
+      <div class="form-row">
+        <div>
+          <label>Home Team</label>
+          <input type="text" id="inp-home-name" value="HOME">
+        </div>
+        <div>
+          <label>Away Team</label>
+          <input type="text" id="inp-away-name" value="AWAY">
+        </div>
+      </div>
+      <div class="form-row">
+        <div style="text-align:center;">
+          <div style="font-size:32px; font-weight:800;" id="ctrl-home-score">0</div>
+          <div class="btn-group">
+            <button class="btn" onclick="modScore('home', -1)">-1</button>
+            <button class="btn" onclick="modScore('home', 1)">+1</button>
+          </div>
+        </div>
+        <div style="text-align:center; min-width:120px;">
+          <div style="font-size:36px; font-weight:800; font-variant-numeric:tabular-nums;" id="ctrl-timer">00:00</div>
+          <div class="btn-group">
+            <button class="btn primary" id="btn-start" onclick="toggleTimer()">Start</button>
+            <button class="btn" onclick="resetTimer()">Reset</button>
+          </div>
+        </div>
+        <div style="text-align:center;">
+          <div style="font-size:32px; font-weight:800;" id="ctrl-away-score">0</div>
+          <div class="btn-group">
+            <button class="btn" onclick="modScore('away', -1)">-1</button>
+            <button class="btn" onclick="modScore('away', 1)">+1</button>
+          </div>
+        </div>
+      </div>
+      <div class="form-row">
+        <div>
+          <label>Added Time</label>
+          <input type="number" id="inp-added" value="0" min="0" onchange="updateStat('addedTime', this.value)">
+        </div>
+        <div>
+          <label>Home Fouls</label>
+          <input type="number" id="inp-home-fouls" value="0" min="0" onchange="updateStat('homeFouls', this.value)">
+        </div>
+        <div>
+          <label>Away Fouls</label>
+          <input type="number" id="inp-away-fouls" value="0" min="0" onchange="updateStat('awayFouls', this.value)">
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Team Setup</h2>
+      <div class="form-row">
+        <div>
+          <label>Formation Home</label>
+          <select id="inp-home-formation" onchange="updateStat('homeFormation', this.value)">
+            <option value="4-3-3">4-3-3</option>
+            <option value="4-4-2">4-4-2</option>
+            <option value="3-5-2">3-5-2</option>
+            <option value="5-4-1">5-4-1</option>
+          </select>
+        </div>
+        <div>
+          <label>Formation Away</label>
+          <select id="inp-away-formation" onchange="updateStat('awayFormation', this.value)">
+            <option value="4-3-3">4-3-3</option>
+            <option value="4-4-2" selected>4-4-2</option>
+            <option value="3-5-2">3-5-2</option>
+            <option value="5-4-1">5-4-1</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div style="flex:1;">
+          <label>Add Home Player</label>
+          <div class="form-row" style="margin-bottom:0;">
+            <input type="text" id="add-home-name" placeholder="Name">
+            <input type="number" id="add-home-num" placeholder="#" style="width:60px;">
+            <button class="btn success" onclick="addPlayer('home')">Add</button>
+          </div>
+          <ul class="player-list" id="list-home"></ul>
+        </div>
+        <div style="flex:1;">
+          <label>Add Away Player</label>
+          <div class="form-row" style="margin-bottom:0;">
+            <input type="text" id="add-away-name" placeholder="Name">
+            <input type="number" id="add-away-num" placeholder="#" style="width:60px;">
+            <button class="btn success" onclick="addPlayer('away')">Add</button>
+          </div>
+          <ul class="player-list" id="list-away"></ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Goal Event</h2>
+      <div class="form-row">
+        <div>
+          <label>Team</label>
+          <select id="goal-team" onchange="populateGoalSelects()">
+            <option value="home">HOME</option>
+            <option value="away">AWAY</option>
+          </select>
+        </div>
+        <div>
+          <label>Scorer</label>
+          <select id="goal-scorer"></select>
+        </div>
+        <div>
+          <label>Assist</label>
+          <select id="goal-assist"><option value="">-- None --</option></select>
+        </div>
+      </div>
+      <button class="btn primary" onclick="triggerGoal()">Trigger Goal Graphic</button>
+      <button class="btn" onclick="hideOverlay('goal')">Hide</button>
+    </section>
+
+    <section class="panel">
+      <h2>Card Event</h2>
+      <div class="form-row">
+        <div>
+          <label>Team</label>
+          <select id="card-team" onchange="populatePlayers('card')">
+            <option value="home">HOME</option>
+            <option value="away">AWAY</option>
+          </select>
+        </div>
+        <div>
+          <label>Player</label>
+          <select id="card-player"></select>
+        </div>
+        <div>
+          <label>Type</label>
+          <select id="card-type">
+            <option value="yellow">Yellow</option>
+            <option value="red">Red</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn primary" onclick="triggerCard()">Trigger Card Graphic</button>
+      <button class="btn" onclick="hideOverlay('card')">Hide</button>
+    </section>
+
+    <section class="panel">
+      <h2>Substitution</h2>
+      <div class="form-row">
+        <div>
+          <label>Team</label>
+          <select id="sub-team" onchange="populatePlayers('sub')">
+            <option value="home">HOME</option>
+            <option value="away">AWAY</option>
+          </select>
+        </div>
+        <div>
+          <label>Player Out</label>
+          <select id="sub-out"></select>
+        </div>
+        <div>
+          <label>Player In</label>
+          <select id="sub-in"></select>
+        </div>
+      </div>
+      <button class="btn primary" onclick="triggerSub()">Trigger Sub Graphic</button>
+      <button class="btn" onclick="hideOverlay('sub')">Hide</button>
+    </section>
+
+    <section class="panel">
+      <h2>Possession & Stats</h2>
+      <div class="form-row">
+        <div>
+          <label>Home %</label>
+          <input type="number" id="inp-home-poss" value="50" min="0" max="100" onchange="updatePossession()">
+        </div>
+        <div>
+          <label>Away %</label>
+          <input type="number" id="inp-away-poss" value="50" min="0" max="100" onchange="updatePossession()">
+        </div>
+      </div>
+      <div class="form-row">
+        <button class="btn" id="btn-possession" onclick="toggleOverlay('possession')">Toggle Possession</button>
+        <button class="btn" id="btn-fouls" onclick="toggleOverlay('fouls')">Toggle Fouls</button>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Graphic Toggles</h2>
+      <div class="toggle-grid">
+        <button class="btn" id="btn-table" onclick="toggleOverlay('table')">Live Table</button>
+        <button class="btn" id="btn-formations" onclick="toggleOverlay('formations')">Formations</button>
+        <button class="btn" id="btn-goal-history" onclick="toggleOverlay('goalHistory')">Goal History</button>
+        <button class="btn" id="btn-var" onclick="toggleOverlay('var')">VAR Status</button>
+        <button class="btn" id="btn-replay" onclick="toggleOverlay('replay')">Replay</button>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Match Officials & VAR</h2>
+      <div class="form-row">
+        <div>
+          <label>Check Type</label>
+          <select id="var-check-type">
+            <option value="Goal">Goal</option>
+            <option value="Penalty">Penalty</option>
+            <option value="Red Card">Red Card</option>
+            <option value="Identity">Identity</option>
+            <option value="Foul">Foul</option>
+          </select>
+        </div>
+        <div style="align-self:end;">
+          <button class="btn primary" onclick="triggerVarCheck()">Trigger Check</button>
+        </div>
+      </div>
+      <div class="form-row">
+        <div>
+          <label>Verdict</label>
+          <select id="var-verdict">
+            <option value="Confirmed">Confirmed</option>
+            <option value="Overturned">Overturned</option>
+            <option value="Offside">Offside</option>
+            <option value="Foul">Foul</option>
+            <option value="No Penalty">No Penalty</option>
+          </select>
+        </div>
+        <div style="align-self:end;">
+          <button class="btn" onclick="showVarVerdict()">Show Verdict</button>
+        </div>
+        <button class="btn danger" style="width: 100%;" onclick="clearVarGraphic()">Clear VAR Graphic</button>
+      </div>
+
+      <div style="margin-top:12px;">
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+          <button class="btn danger" onclick="quickRefCall('offside')">Offside</button>
+          <button class="btn" onclick="quickRefCall('handball')">Handball</button>
+          <button class="btn danger" onclick="quickRefCall('penalty')">Penalty</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" style="text-align: center; margin-bottom: 20px;">
+      <button class="btn danger" style="width: 100%;" onclick="logout()">Logout</button>
+    </section>
+  </main>
+
+<script src="script.js"></script>
+</body>
+</html>

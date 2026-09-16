@@ -1,0 +1,50 @@
+generator client {
+  provider = "prisma-client-js"
+}
+datasource db {
+  provider = "postgresql"
+}
+model User {
+  id           Int      @id @default(autoincrement())
+  username     String   @unique @db.VarChar(100)
+  passwordHash String   @map("password_hash")
+  createdAt    DateTime @default(now()) @map("created_at")
+  @@map("users")
+}
+model RequestLog {
+  id        Int      @id @default(autoincrement())
+  loggedAt  DateTime @default(now()) @map("logged_at")
+  ip        String?  @db.VarChar(64)
+  port      String?  @db.VarChar(16)
+  protocol  String?  @db.VarChar(32)
+  method    String?  @db.VarChar(16)
+  uri       String?
+  referer   String?
+  userAgent String?  @map("user_agent")
+  lang      String?  @db.VarChar(255)
+  queryData Json?    @map("query_data")
+  bodyKeys  String?  @map("body_keys")
+  @@map("request_logs")
+}
+model LoginEvent {
+  id       Int      @id @default(autoincrement())
+  loggedAt DateTime @default(now()) @map("logged_at")
+  username String?  @db.VarChar(100)
+  success  Boolean?
+  message  String?
+  ip       String?  @db.VarChar(64)
+  @@map("login_events")
+}
+model AppState {
+  id        Int      @id @default(1) @db.SmallInt
+  data      Json
+  updatedAt DateTime @default(now()) @map("updated_at")
+  @@map("app_state")
+}
+model Session {
+  sid    String   @id @db.VarChar(255)
+  sess   Json
+  expire DateTime @db.Timestamp(6)
+  @@index([expire], map: "IDX_session_expire")
+  @@map("session")
+}
