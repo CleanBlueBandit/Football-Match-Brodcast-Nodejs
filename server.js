@@ -3,19 +3,10 @@ require('dotenv').config();
 // Vercel Prisma Postgres integration creates these variables.
 // Normalize them so the rest of the application can keep using
 // the normal DATABASE_URL / POSTGRES_URL names.
-if (!process.env.DATABASE_URL) {
-  process.env.DATABASE_URL =
-    process.env.db_DATABASE_URL ||
-    process.env.db_PRISMA_DATABASE_URL ||
-    process.env.db_POSTGRES_URL;
-}
+process.env.DATABASE_URL = process.env.db_POSTGRES_URL;
 
-if (!process.env.POSTGRES_URL) {
-  process.env.POSTGRES_URL =
-    process.env.db_POSTGRES_URL ||
-    process.env.db_DATABASE_URL ||
-    process.env.db_PRISMA_DATABASE_URL;
-}
+process.env.POSTGRES_URL = process.env.db_PRISMA_DATABASE_URL;
+
 
 const path = require('path');
 const http = require('http');
