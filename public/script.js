@@ -80,7 +80,7 @@ window.updateStat = function (field, value) {
 window.updatePossession = function () {
   send('updatePossession', {
     home: document.getElementById('inp-home-poss').value,
-    away: document.getElementById('inp-away-poss').value,
+    away: 100 - document.getElementById('inp-home-poss').value,
   });
 };
 
