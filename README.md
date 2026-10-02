@@ -61,6 +61,13 @@ one after another.
   `npm run studio` (Prisma Studio) or by editing `prisma/seed/league.json` and
   running `npm run seed`. Changes are picked up between matches without a
   restart.
+- **Standings import on startup:** every time the server starts it imports the
+  standings (the `teams` rows) from `prisma/seed/league.json` (override with
+  `STANDINGS_FILE`). By default only teams that don't exist yet are created, so
+  results recorded in live matches are never overwritten. Set
+  `STANDINGS_IMPORT=overwrite` to reset standings to the file's values, or
+  `STANDINGS_IMPORT=off` to disable it. You can also run it manually with
+  `npm run import:standings [file] [-- --overwrite]`. Squads are still loaded by `npm run seed`.
 - **Start match:** with no match running, the control page shows only a
   "Start a Match" menu (home team / away team). Starting loads both squads and
   team names and reveals the controls. Match state (score, clock, overlays,

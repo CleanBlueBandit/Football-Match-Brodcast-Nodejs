@@ -5,7 +5,7 @@ const { Pool } = require('pg');
 // connections instead of two.
 // Set DB_SSL=false for a local Postgres without SSL.
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL || process.env.db_POSTGRES_URL,
+  connectionString: process.env.db_POSTGRES_URL,
   ssl: process.env.DB_SSL === 'false' ? false : { rejectUnauthorized: false },
 });
 
