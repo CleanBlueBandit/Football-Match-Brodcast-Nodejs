@@ -591,4 +591,9 @@ function setupWebSocket(server) {
   });
 }
 
-module.exports = { setupWebSocket };
+// Read-only access to the current match state for other modules (e.g. the Excel export).
+function getMatchState() {
+  return state;
+}
+
+module.exports = { setupWebSocket, getMatchState };

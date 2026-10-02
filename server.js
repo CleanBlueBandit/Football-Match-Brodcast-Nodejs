@@ -11,6 +11,7 @@ const { setupWebSocket } = require('./ws');
 const { importStandings } = require('./db/importStandings');
 const requireAuth = require('./middleware/auth');
 const authRoutes = require('./routes/auth');
+const exportRoutes = require('./routes/export');
 
 const PgSession = pgSessionFactory(session);
 
@@ -37,6 +38,7 @@ app.use(
 );
 
 app.use('/api', authRoutes);
+app.use('/api', exportRoutes);
 
 
 

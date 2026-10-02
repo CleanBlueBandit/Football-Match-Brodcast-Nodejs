@@ -68,6 +68,11 @@ one after another.
   `STANDINGS_IMPORT=overwrite` to reset standings and player stats to the file's values, or
   `STANDINGS_IMPORT=off` to disable it. You can also run it manually with
   `npm run import:standings [file] [-- --overwrite]`.
+- **Excel report:** the **Download Excel** button in the control panel header (or
+  `GET /api/export.xlsx` while logged in) downloads a workbook with a `Teams` sheet
+  (standings), a `Players` sheet (every player's season totals, grouped by team) and,
+  while a match is live, `Current Match` and `Match Player Stats` sheets. Live match stats
+  only reach the `Teams`/`Players` totals once the match is ended with the result saved.
 - **Start match:** with no match running, the control page shows only a
   "Start a Match" menu (home team / away team). Starting loads both squads and
   team names and reveals the controls. Match state (score, clock, overlays,
