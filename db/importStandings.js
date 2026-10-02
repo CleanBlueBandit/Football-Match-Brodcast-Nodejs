@@ -63,12 +63,19 @@ function normalizeTeam(raw, index) {
   const drawn = toInt(raw.drawn);
   const lost = toInt(raw.lost);
   const teamId = id.slice(0, 64);
-  const players = (Array.isArray(raw.players) ? raw.players : []).map((p, i) => normalizePlayer(p, teamId, i));
+  // A bad player entry is skipped with a warning instead of failing the whole import.
+  const players = [];
   const numbers = new Set();
-  for (const p of players) {
-    if (numbers.has(p.number)) throw new Error(`duplicate shirt number ${p.number} in "${teamId}"`);
-    numbers.add(p.number);
-  }
+  (Array.isArray(raw.players) ? raw.players : []).forEach((rawPlayer, i) => {
+    try {
+      const p = normalizePlayer(rawPlayer, teamId, i);
+      if (numbers.has(p.number)) throw new Error(`duplicate shirt number ${p.number} in "${teamId}"`);
+      numbers.add(p.number);
+      players.push(p);
+    } catch (err) {
+      console.warn(`Standings import: skipping player - ${err.message}`);
+    }
+  });
   return {
     players,
     id: teamId,
@@ -140,6 +147,7 @@ async function importStandings({ file, mode } = {}) {
       `Standings imported from ${fileName} (overwrite): ` +
         `${result.created} teams created, ${result.updated} updated, ${result.players} players written.`
     );
+    await logTotals();
     return result;
   }
 
@@ -158,7 +166,13 @@ async function importStandings({ file, mode } = {}) {
       `(${result.skipped} already present), ${result.players} players created ` +
       `(${players.length - result.players} already present).`
   );
+  await logTotals();
   return result;
+}
+
+async function logTotals() {
+  const [t, p] = await Promise.all([prisma.team.count(), prisma.player.count()]);
+  console.log(`Database now has ${t} teams and ${p} players.`);
 }
 
 module.exports = { importStandings };

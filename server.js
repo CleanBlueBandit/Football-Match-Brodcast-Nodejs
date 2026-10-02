@@ -69,7 +69,7 @@ async function start() {
   try {
     await importStandings();
   } catch (err) {
-    console.error('Standings import failed (continuing without it):', err.message);
+    console.error('Standings import failed (continuing without it):', err);
   }
 
   setupWebSocket(server);
