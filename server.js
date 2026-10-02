@@ -6,7 +6,7 @@ const express = require('express');
 const session = require('express-session');
 const pgSessionFactory = require('connect-pg-simple');
 
-const pool = require('./db/pool');
+const { prisma, pool } = require('./db/prisma');
 const { setupWebSocket } = require('./ws');
 const requireAuth = require('./middleware/auth');
 const authRoutes = require('./routes/auth');
@@ -66,3 +66,12 @@ const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`Broadcast control server listening on port ${PORT}`);
 });
+
+async function shutdown() {
+  server.close();
+  await prisma.$disconnect().catch(() => {});
+  await pool.end().catch(() => {});
+  process.exit(0);
+}
+process.on('SIGTERM', shutdown);
+process.on('SIGINT', shutdown);

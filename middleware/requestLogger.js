@@ -1,4 +1,4 @@
-const pool = require('../db/pool');
+const { prisma, Prisma } = require('../db/prisma');
 
 // Equivalent to getVisitorIP() in logger.php / login.php
 function getVisitorIP(req) {
@@ -23,7 +23,8 @@ module.exports = function requestLogger(req, res, next) {
   const referer = req.headers['referer'] || 'Direct / No Referer';
   const userAgent = req.headers['user-agent'] || 'Unknown';
   const lang = req.headers['accept-language'] || 'Unknown';
-  const queryData = req.query && Object.keys(req.query).length ? req.query : null;
+  // Prisma needs Prisma.DbNull (not plain null) to write NULL into a Json column.
+  const queryData = req.query && Object.keys(req.query).length ? req.query : Prisma.DbNull;
 
   // Only field NAMES are logged for POST bodies, never values
   // (mirrors the "never log password values" comment in login.php).
@@ -31,12 +32,11 @@ module.exports = function requestLogger(req, res, next) {
     ? Object.keys(req.body).join(', ')
     : 'None';
 
-  pool.query(
-    `INSERT INTO request_logs
-       (ip, port, protocol, method, uri, referer, user_agent, lang, query_data, body_keys)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
-    [ip, port, protocol, method, uri, referer, userAgent, lang, queryData, bodyKeys]
-  ).catch((err) => console.error('Request log error:', err.message));
+  prisma.requestLog
+    .create({
+      data: { ip, port, protocol, method, uri, referer, userAgent, lang, queryData, bodyKeys },
+    })
+    .catch((err) => console.error('Request log error:', err.message));
 
   next();
 };

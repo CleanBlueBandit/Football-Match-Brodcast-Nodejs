@@ -276,7 +276,7 @@ window.startMatch = function () {
   const awayId = document.getElementById('start-away').value;
   const err = document.getElementById('start-error');
   if (!homeId || !awayId) {
-    err.textContent = 'No teams available. Add some to data/league.json.';
+    err.textContent = 'No teams available. Add some to the database (npm run seed or npx prisma studio).';
     err.hidden = false;
     return;
   }
@@ -295,7 +295,7 @@ window.endMatch = function () {
   const save = document.getElementById('end-save').checked;
   const summary = `${m.homeTeam} ${m.homeScore} - ${m.awayScore} ${m.awayTeam}`;
   const note = save
-    ? 'The result and player stats will be saved to the league data.'
+    ? 'The result and player stats will be saved to the league.'
     : 'The result and player stats will NOT be saved.';
   if (!confirm(`End the match?\n\n${summary}\n${note}`)) return;
   send('endMatch', { saveResult: save });
