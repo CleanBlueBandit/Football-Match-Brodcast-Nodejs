@@ -185,7 +185,7 @@
       const data = await res.json();
 
       if (res.ok) {
-        window.location.href = data.redirect || '/control.html';
+        window.location.href = data.redirect || '/control';
         return;
       }
 

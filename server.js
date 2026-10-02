@@ -54,6 +54,10 @@ app.get('/', (req, res) => {
   res.redirect(req.session.loggedin ? '/control.html' : '/login.html');
 });
 
+app.get('/src/background.jpg', (req, res) => {
+  res.sendFile(path.join(__dirname, 'src', 'background.jpg'));
+})
+
 app.use(express.static(path.join(__dirname, 'public'), { index: false }));
 
 setupWebSocket(server);

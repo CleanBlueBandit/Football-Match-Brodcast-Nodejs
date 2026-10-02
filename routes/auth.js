@@ -72,7 +72,7 @@ router.post('/login', async (req, res) => {
     req.session.username = username;
 
     await logLoginEvent(username, true, `User ID: ${id}`, ip);
-    res.json({ status: 'ok', redirect: '/control.html' });
+    res.json({ status: 'ok', redirect: '/control' });
   } catch (err) {
     console.error('Login error:', err);
     res.status(500).json({ error: 'Server error.' });
@@ -82,7 +82,7 @@ router.post('/login', async (req, res) => {
 router.post('/logout', (req, res) => {
   req.session.destroy(() => {
     res.clearCookie('connect.sid');
-    res.json({ status: 'ok', redirect: '/login.html' });
+    res.json({ status: 'ok', redirect: '/login' });
   });
 });
 
