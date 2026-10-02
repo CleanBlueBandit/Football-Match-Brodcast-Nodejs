@@ -43,15 +43,15 @@ app.use('/api', authRoutes);
 
 app.get('/login', (req, res) => {
   if (req.session.loggedin) return res.redirect('/control');
-  res.sendFile(path.join(__dirname, 'public', 'login'));
+  res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
 
 app.get('/control', requireAuth, (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'control'));
+  res.sendFile(path.join(__dirname, 'public', 'control.html'));
 });
 
 app.get('/', (req, res) => {
-  res.redirect(req.session.loggedin ? '/control' : '/login');
+  res.redirect(req.session.loggedin ? '/control.html' : '/login');
 });
 
 app.get('/src/background.jpg', (req, res) => {
