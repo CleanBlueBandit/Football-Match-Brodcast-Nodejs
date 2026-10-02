@@ -1,4 +1,4 @@
-// Imports league standings (the `teams` table) from a JSON file into Postgres via Prisma.
+// Imports league standings (`teams`) and squads (`players`) from a JSON file into Postgres via Prisma.
 //
 // Runs automatically when the server starts (see server.js) and can also be run by hand:
 //   npm run import:standings
@@ -8,12 +8,15 @@
 //   { "teams": [ { "id": "red-lions", "name": "Red Lions", "played": 0, "won": 0,
 //                  "drawn": 0, "lost": 0, "gf": 0, "ga": 0, "points": 0 }, ... ] }
 //   [ { ...same team objects... } ]
-// (Any "players" arrays in the file are ignored here; squads are loaded by `npm run seed`.)
+// Each team may have a "players" array:
+//   { "number": 7, "name": "Red Player 7", "goals": 0, "assists": 0, "fouls": 0,
+//     "yellow_cards": 0, "red_cards": 0 }
 //
 // Modes:
-//   missing   (default) only creates teams that don't exist yet. Existing rows are left
-//             alone, so results recorded during live matches survive a restart.
-//   overwrite replaces the standings of every team in the file with the file's values.
+//   missing   (default) only creates teams/players that don't exist yet. Existing rows are
+//             left alone, so results recorded during live matches survive a restart.
+//   overwrite replaces the standings and player stats of everything in the file with the
+//             file's values.
 //
 // Environment:
 //   STANDINGS_FILE    path to the JSON file (default: prisma/seed/league.json)
@@ -29,6 +32,26 @@ const toInt = (value, fallback = 0) => {
   return Number.isFinite(n) && n >= 0 ? Math.trunc(n) : fallback;
 };
 
+function normalizePlayer(raw, teamId, index) {
+  if (!raw || typeof raw !== 'object') throw new Error(`player #${index + 1} of "${teamId}" is not an object`);
+  const number = Number(raw.number);
+  if (!Number.isInteger(number) || number < 0) {
+    throw new Error(`player #${index + 1} of "${teamId}" has an invalid "number"`);
+  }
+  const name = typeof raw.name === 'string' ? raw.name.trim() : '';
+  if (!name) throw new Error(`player #${number} of "${teamId}" is missing "name"`);
+  return {
+    teamId,
+    number,
+    name: name.slice(0, 100),
+    goals: toInt(raw.goals),
+    assists: toInt(raw.assists),
+    fouls: toInt(raw.fouls),
+    yellowCards: toInt(raw.yellow_cards ?? raw.yellowCards),
+    redCards: toInt(raw.red_cards ?? raw.redCards),
+  };
+}
+
 function normalizeTeam(raw, index) {
   if (!raw || typeof raw !== 'object') throw new Error(`entry #${index + 1} is not an object`);
   const id = typeof raw.id === 'string' ? raw.id.trim() : '';
@@ -39,8 +62,16 @@ function normalizeTeam(raw, index) {
   const won = toInt(raw.won);
   const drawn = toInt(raw.drawn);
   const lost = toInt(raw.lost);
+  const teamId = id.slice(0, 64);
+  const players = (Array.isArray(raw.players) ? raw.players : []).map((p, i) => normalizePlayer(p, teamId, i));
+  const numbers = new Set();
+  for (const p of players) {
+    if (numbers.has(p.number)) throw new Error(`duplicate shirt number ${p.number} in "${teamId}"`);
+    numbers.add(p.number);
+  }
   return {
-    id: id.slice(0, 64),
+    players,
+    id: teamId,
     name: name.slice(0, 100),
     played: raw.played == null ? won + drawn + lost : toInt(raw.played),
     won,
@@ -70,7 +101,7 @@ async function importStandings({ file, mode } = {}) {
   const resolvedMode = (mode || process.env.STANDINGS_IMPORT || 'missing').toLowerCase();
   if (resolvedMode === 'off') {
     console.log('Standings import disabled (STANDINGS_IMPORT=off).');
-    return { created: 0, updated: 0, skipped: 0 };
+    return { created: 0, updated: 0, skipped: 0, players: 0 };
   }
   if (!['missing', 'overwrite'].includes(resolvedMode)) {
     throw new Error(`unknown import mode "${resolvedMode}" (use "missing", "overwrite" or "off")`);
@@ -79,32 +110,53 @@ async function importStandings({ file, mode } = {}) {
   const resolvedFile = path.resolve(file || process.env.STANDINGS_FILE || DEFAULT_FILE);
   if (!fs.existsSync(resolvedFile)) {
     console.warn(`Standings import skipped: ${resolvedFile} not found.`);
-    return { created: 0, updated: 0, skipped: 0 };
+    return { created: 0, updated: 0, skipped: 0, players: 0 };
   }
 
-  const teams = readTeams(resolvedFile);
-  if (teams.length === 0) return { created: 0, updated: 0, skipped: 0 };
+  const parsedTeams = readTeams(resolvedFile);
+  if (parsedTeams.length === 0) return { created: 0, updated: 0, skipped: 0, players: 0 };
+
+  const teams = parsedTeams.map(({ players, ...team }) => team);
+  const players = parsedTeams.flatMap((t) => t.players);
+  const fileName = path.basename(resolvedFile);
 
   if (resolvedMode === 'overwrite') {
     const existing = await prisma.team.count({ where: { id: { in: teams.map((t) => t.id) } } });
-    await prisma.$transaction(
-      teams.map(({ id, ...data }) =>
+    // Teams first (players reference them), all in one transaction.
+    await prisma.$transaction([
+      ...teams.map(({ id, ...data }) =>
         prisma.team.upsert({ where: { id }, update: data, create: { id, ...data } })
-      )
-    );
-    const result = { created: teams.length - existing, updated: existing, skipped: 0 };
+      ),
+      ...players.map(({ teamId, number, ...data }) =>
+        prisma.player.upsert({
+          where: { teamId_number: { teamId, number } },
+          update: data,
+          create: { teamId, number, ...data },
+        })
+      ),
+    ]);
+    const result = { created: teams.length - existing, updated: existing, skipped: 0, players: players.length };
     console.log(
-      `Standings imported from ${path.basename(resolvedFile)} (overwrite): ` +
-        `${result.created} created, ${result.updated} updated.`
+      `Standings imported from ${fileName} (overwrite): ` +
+        `${result.created} teams created, ${result.updated} updated, ${result.players} players written.`
     );
     return result;
   }
 
-  const { count } = await prisma.team.createMany({ data: teams, skipDuplicates: true });
-  const result = { created: count, updated: 0, skipped: teams.length - count };
+  const [teamRes, playerRes] = await prisma.$transaction([
+    prisma.team.createMany({ data: teams, skipDuplicates: true }),
+    prisma.player.createMany({ data: players, skipDuplicates: true }),
+  ]);
+  const result = {
+    created: teamRes.count,
+    updated: 0,
+    skipped: teams.length - teamRes.count,
+    players: playerRes.count,
+  };
   console.log(
-    `Standings imported from ${path.basename(resolvedFile)}: ` +
-      `${result.created} created, ${result.skipped} already present.`
+    `Standings imported from ${fileName}: ${result.created} teams created ` +
+      `(${result.skipped} already present), ${result.players} players created ` +
+      `(${players.length - result.players} already present).`
   );
   return result;
 }
