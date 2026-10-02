@@ -20,7 +20,7 @@ html, body { margin: 0; padding: 0; font-family: var(--font-main); }
   height: 100vh;
   overflow: hidden;
   position: absolute;
-  background-image: url("background.jpg") !important;
+  background-image: url("/src/background.jpg") !important;
   background-repeat: no-repeat;
   background-size: cover;
 }
