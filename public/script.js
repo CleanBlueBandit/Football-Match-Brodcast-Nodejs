@@ -238,7 +238,13 @@ function renderPlayerStats() {
   if (sig === statsSignature) return; // don't rebuild (and eat clicks) on every clock tick
   statsSignature = sig;
 
-  const fields = [['goals', 'G'], ['assists', 'A'], ['fouls', 'F']];
+  const fields = [
+    ['goals', 'G', 'Goals'],
+    ['assists', 'A', 'Assists'],
+    ['fouls', 'F', 'Fouls'],
+    ['yellow_cards', 'Y', 'Yellow cards'],
+    ['red_cards', 'R', 'Red cards'],
+  ];
   ['home', 'away'].forEach((team) => {
     const title = document.getElementById(`stats-${team}-title`);
     if (title) title.textContent = team === 'home' ? state.match.homeTeam : state.match.awayTeam;
@@ -248,16 +254,16 @@ function renderPlayerStats() {
     el.innerHTML =
       (state.players[team] || [])
         .map((p) => {
-          const st = stats[String(p.number)] || { goals: 0, assists: 0, fouls: 0 };
+          const st = stats[String(p.number)] || {};
           const cells = fields
-            .map(([f, label]) => {
+            .map(([f, label, title]) => {
               const data = `data-team="${team}" data-number="${escapeHtml(String(p.number))}" data-stat="${f}"`;
-              return `<span class="stat-cell"><span class="lbl">${label}</span>` +
+              return `<span class="stat-cell stat-${f}" title="${title}"><span class="lbl">${label}</span>` +
                 `<button ${data} data-delta="-1">-</button><span class="val">${st[f] || 0}</span>` +
                 `<button ${data} data-delta="1">+</button></span>`;
             })
             .join('');
-          return `<div class="stat-row"><span class="stat-name">${escapeHtml(String(p.number))} ${escapeHtml(p.name)}</span>${cells}</div>`;
+          return `<div class="stat-row"><span class="stat-name">${escapeHtml(String(p.number))} ${escapeHtml(p.name)}</span><span class="stat-cells">${cells}</span></div>`;
         })
         .join('') || '<div class="hint">No players</div>';
   });

@@ -69,11 +69,17 @@ one after another.
 - **TV page:** while no match is live, `tv.html` shows a "The match will begin
   soon" card instead of the scorebug; it comes back automatically after a match
   ends.
-- **Player stats:** every player in `league.json` has `goals`, `assists` and
-  `fouls` (running totals). During a match they are tracked per player in a
-  "Player Stats" panel: the Goal Event credits the scorer and assister
-  automatically, and the +/- buttons record fouls or correct mistakes (a foul
-  also bumps the team's foul count; goals/assists do not change the score).
+- **Player stats:** every player in `league.json` has `goals`, `assists`,
+  `fouls`, `yellow_cards` and `red_cards` (running totals). During a match they
+  are tracked per player in a "Player Stats" panel: the Goal Event credits the
+  scorer and assister, the Card Event credits a yellow or red card to the
+  carded player, and the +/- buttons record fouls or correct mistakes.
+  A card also counts as a foul: the Card Event adds one foul to the player and
+  to the team's foul count, so you don't need to add it separately. Use the F
+  buttons for fouls that weren't carded. A player foul always bumps the team's
+  foul count; goals, assists and cards do not change the score. Two yellows are
+  not turned into a red automatically; add the red yourself if the referee
+  sends the player off.
   When the match ends with "Record result and player stats" ticked, the
   match's numbers are added onto each player's totals in `league.json`;
   unticked, they are discarded. Shirt numbers must be unique within a team,

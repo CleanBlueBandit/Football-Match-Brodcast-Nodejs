@@ -16,77 +16,99 @@
           "name": "Red Player 1",
           "goals": 0,
           "assists": 0,
-          "fouls": 0
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
         },
         {
           "number": 2,
           "name": "Red Player 2",
           "goals": 0,
           "assists": 0,
-          "fouls": 0
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
         },
         {
           "number": 3,
           "name": "Red Player 3",
           "goals": 0,
           "assists": 0,
-          "fouls": 0
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
         },
         {
           "number": 4,
           "name": "Red Player 4",
           "goals": 0,
           "assists": 0,
-          "fouls": 0
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
         },
         {
           "number": 5,
           "name": "Red Player 5",
           "goals": 0,
           "assists": 0,
-          "fouls": 0
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
         },
         {
           "number": 6,
           "name": "Red Player 6",
           "goals": 0,
           "assists": 0,
-          "fouls": 0
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
         },
         {
           "number": 7,
           "name": "Red Player 7",
           "goals": 0,
           "assists": 0,
-          "fouls": 0
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
         },
         {
           "number": 8,
           "name": "Red Player 8",
           "goals": 0,
           "assists": 0,
-          "fouls": 0
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
         },
         {
           "number": 9,
           "name": "Red Player 9",
           "goals": 0,
           "assists": 0,
-          "fouls": 0
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
         },
         {
           "number": 10,
           "name": "Red Player 10",
           "goals": 0,
           "assists": 0,
-          "fouls": 0
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
         },
         {
           "number": 11,
           "name": "Red Player 11",
           "goals": 0,
           "assists": 0,
-          "fouls": 0
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
         }
       ]
     },
@@ -106,77 +128,99 @@
           "name": "Blue Player 1",
           "goals": 0,
           "assists": 0,
-          "fouls": 0
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
         },
         {
           "number": 2,
           "name": "Blue Player 2",
           "goals": 0,
           "assists": 0,
-          "fouls": 0
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
         },
         {
           "number": 3,
           "name": "Blue Player 3",
           "goals": 0,
           "assists": 0,
-          "fouls": 0
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
         },
         {
           "number": 4,
           "name": "Blue Player 4",
           "goals": 0,
           "assists": 0,
-          "fouls": 0
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
         },
         {
           "number": 5,
           "name": "Blue Player 5",
           "goals": 0,
           "assists": 0,
-          "fouls": 0
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
         },
         {
           "number": 6,
           "name": "Blue Player 6",
           "goals": 0,
           "assists": 0,
-          "fouls": 0
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
         },
         {
           "number": 7,
           "name": "Blue Player 7",
           "goals": 0,
           "assists": 0,
-          "fouls": 0
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
         },
         {
           "number": 8,
           "name": "Blue Player 8",
           "goals": 0,
           "assists": 0,
-          "fouls": 0
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
         },
         {
           "number": 9,
           "name": "Blue Player 9",
           "goals": 0,
           "assists": 0,
-          "fouls": 0
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
         },
         {
           "number": 10,
           "name": "Blue Player 10",
           "goals": 0,
           "assists": 0,
-          "fouls": 0
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
         },
         {
           "number": 11,
           "name": "Blue Player 11",
           "goals": 0,
           "assists": 0,
-          "fouls": 0
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
         }
       ]
     },
@@ -196,77 +240,99 @@
           "name": "Green Player 1",
           "goals": 0,
           "assists": 0,
-          "fouls": 0
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
         },
         {
           "number": 2,
           "name": "Green Player 2",
           "goals": 0,
           "assists": 0,
-          "fouls": 0
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
         },
         {
           "number": 3,
           "name": "Green Player 3",
           "goals": 0,
           "assists": 0,
-          "fouls": 0
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
         },
         {
           "number": 4,
           "name": "Green Player 4",
           "goals": 0,
           "assists": 0,
-          "fouls": 0
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
         },
         {
           "number": 5,
           "name": "Green Player 5",
           "goals": 0,
           "assists": 0,
-          "fouls": 0
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
         },
         {
           "number": 6,
           "name": "Green Player 6",
           "goals": 0,
           "assists": 0,
-          "fouls": 0
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
         },
         {
           "number": 7,
           "name": "Green Player 7",
           "goals": 0,
           "assists": 0,
-          "fouls": 0
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
         },
         {
           "number": 8,
           "name": "Green Player 8",
           "goals": 0,
           "assists": 0,
-          "fouls": 0
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
         },
         {
           "number": 9,
           "name": "Green Player 9",
           "goals": 0,
           "assists": 0,
-          "fouls": 0
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
         },
         {
           "number": 10,
           "name": "Green Player 10",
           "goals": 0,
           "assists": 0,
-          "fouls": 0
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
         },
         {
           "number": 11,
           "name": "Green Player 11",
           "goals": 0,
           "assists": 0,
-          "fouls": 0
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
         }
       ]
     },
@@ -286,77 +352,99 @@
           "name": "Gold Player 1",
           "goals": 0,
           "assists": 0,
-          "fouls": 0
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
         },
         {
           "number": 2,
           "name": "Gold Player 2",
           "goals": 0,
           "assists": 0,
-          "fouls": 0
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
         },
         {
           "number": 3,
           "name": "Gold Player 3",
           "goals": 0,
           "assists": 0,
-          "fouls": 0
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
         },
         {
           "number": 4,
           "name": "Gold Player 4",
           "goals": 0,
           "assists": 0,
-          "fouls": 0
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
         },
         {
           "number": 5,
           "name": "Gold Player 5",
           "goals": 0,
           "assists": 0,
-          "fouls": 0
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
         },
         {
           "number": 6,
           "name": "Gold Player 6",
           "goals": 0,
           "assists": 0,
-          "fouls": 0
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
         },
         {
           "number": 7,
           "name": "Gold Player 7",
           "goals": 0,
           "assists": 0,
-          "fouls": 0
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
         },
         {
           "number": 8,
           "name": "Gold Player 8",
           "goals": 0,
           "assists": 0,
-          "fouls": 0
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
         },
         {
           "number": 9,
           "name": "Gold Player 9",
           "goals": 0,
           "assists": 0,
-          "fouls": 0
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
         },
         {
           "number": 10,
           "name": "Gold Player 10",
           "goals": 0,
           "assists": 0,
-          "fouls": 0
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
         },
         {
           "number": 11,
           "name": "Gold Player 11",
           "goals": 0,
           "assists": 0,
-          "fouls": 0
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
         }
       ]
     }

@@ -172,15 +172,12 @@ label.check {
 .stats-columns h3 { margin: 0 0 8px; font-size: 14px; }
 .stat-list { max-height: 360px; overflow-y: auto; }
 .stat-row {
-  display: grid;
-  grid-template-columns: 1fr repeat(3, auto);
-  align-items: center;
-  gap: 10px;
-  padding: 5px 4px;
+  padding: 6px 4px;
   border-bottom: 1px solid var(--border);
   font-size: 13px;
 }
-.stat-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.stat-name { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-bottom: 4px; }
+.stat-cells { display: flex; flex-wrap: wrap; gap: 6px 12px; }
 .stat-cell { display: flex; align-items: center; gap: 4px; }
 .stat-cell .lbl { color: var(--muted); font-size: 11px; width: 12px; }
 .stat-cell .val { min-width: 18px; text-align: center; font-weight: 700; font-variant-numeric: tabular-nums; }
@@ -190,3 +187,5 @@ label.check {
   color: var(--text); border-radius: 6px; cursor: pointer;
 }
 .stat-cell button:hover { border-color: #555; }
+.stat-yellow_cards .lbl { color: #ffcc00; font-weight: 700; }
+.stat-red_cards .lbl { color: #e63946; font-weight: 700; }

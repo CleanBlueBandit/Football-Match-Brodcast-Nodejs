@@ -100,7 +100,8 @@ function mergeDefaults(saved = {}) {
 // League data (data/league.json): teams, their squads and their standings.
 // This is the single source of truth for team selection and the league table.
 // ---------------------------------------------------------------------------
-const STAT_FIELDS = ['goals', 'assists', 'fouls'];
+const STAT_FIELDS = ['goals', 'assists', 'fouls', 'yellow_cards', 'red_cards'];
+const zeroStats = () => Object.fromEntries(STAT_FIELDS.map((f) => [f, 0]));
 const LEAGUE_PATH = path.join(__dirname, '..', 'data', 'league.json');
 let league = { teams: [] };
 
@@ -142,7 +143,7 @@ function statEntry(side, number, name) {
   const key = String(number);
   let e = state.playerStats[side][key];
   if (!e) {
-    e = { number: Number.isFinite(Number(number)) ? Number(number) : key, name: name || '', goals: 0, assists: 0, fouls: 0 };
+    e = { number: Number.isFinite(Number(number)) ? Number(number) : key, name: name || '', ...zeroStats() };
     state.playerStats[side][key] = e;
   } else if (name && !e.name) {
     e.name = name;
@@ -150,14 +151,25 @@ function statEntry(side, number, name) {
   return e;
 }
 
+// Changes a player's foul count and keeps the team's foul counter in step
+// (a player foul is also a team foul). Never goes below zero.
+function changePlayerFouls(side, entry, delta) {
+  const before = entry.fouls || 0;
+  entry.fouls = Math.max(0, before + delta);
+  if (entry.fouls !== before) {
+    const teamKey = side === 'home' ? 'homeFouls' : 'awayFouls';
+    state.match[teamKey] = Math.max(0, (state.match[teamKey] || 0) + delta);
+  }
+}
+
 // Adds this match's player stats onto each player's running totals in league.json.
 function recordPlayerStats(side, team) {
   for (const st of Object.values(state.playerStats?.[side] || {})) {
-    if (!st.goals && !st.assists && !st.fouls) continue;
+    if (!STAT_FIELDS.some((f) => st[f])) continue;
     let p = team.players.find((pl) => String(pl.number) === String(st.number));
     if (!p) {
       // e.g. a player added from the control panel during the match
-      p = { number: st.number, name: st.name, goals: 0, assists: 0, fouls: 0 };
+      p = { number: st.number, name: st.name, ...zeroStats() };
       team.players.push(p);
     }
     STAT_FIELDS.forEach((f) => { p[f] = (p[f] || 0) + (st[f] || 0); });
@@ -366,13 +378,8 @@ function applyCommand(cmd) {
       const entry = statEntry(cmd.team, cmd.number, squadPlayer?.name);
       if (!entry) return false;
       const delta = Number(cmd.delta) < 0 ? -1 : 1;
-      const before = entry[cmd.field];
-      entry[cmd.field] = Math.max(0, before + delta);
-      // A player foul is also a team foul, so keep the team counter in step.
-      if (cmd.field === 'fouls' && entry[cmd.field] !== before) {
-        const teamKey = cmd.team === 'home' ? 'homeFouls' : 'awayFouls';
-        state.match[teamKey] = Math.max(0, (state.match[teamKey] || 0) + delta);
-      }
+      if (cmd.field === 'fouls') changePlayerFouls(cmd.team, entry, delta);
+      else entry[cmd.field] = Math.max(0, (entry[cmd.field] || 0) + delta);
       break;
     }
 
@@ -412,6 +419,16 @@ function applyCommand(cmd) {
         team: state.match[teamNameKey],
         number: cmd.playerNumber || '',
       };
+      // Record the card against the player. A card is the result of a foul, so it
+      // also adds one foul to the player and to the team's foul count.
+      const cardField = cmd.cardType === 'yellow' ? 'yellow_cards' : cmd.cardType === 'red' ? 'red_cards' : null;
+      if (cardField && (cmd.team === 'home' || cmd.team === 'away')) {
+        const carded = statEntry(cmd.team, cmd.playerNumber, cmd.playerName);
+        if (carded) {
+          carded[cardField] = (carded[cardField] || 0) + 1;
+          changePlayerFouls(cmd.team, carded, 1);
+        }
+      }
       break;
     }
 
