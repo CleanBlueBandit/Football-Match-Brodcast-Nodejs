@@ -1,12 +1,17 @@
 {
   "name": "broadcast-control-node",
   "version": "1.0.0",
-  "description": "Broadcast control panel - Express + PostgreSQL + WebSockets",
+  "description": "Broadcast control panel - Express + Prisma + PostgreSQL + WebSockets",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
-    "migrate": "node db/migrate.js",
+    "postinstall": "prisma generate",
+    "migrate": "prisma migrate deploy",
+    "migrate:dev": "prisma migrate dev",
+    "seed": "prisma db seed",
+    "import:standings": "node db/importStandings.js",
+    "studio": "prisma studio",
     "register": "node register.js"
   },
   "dependencies": {
