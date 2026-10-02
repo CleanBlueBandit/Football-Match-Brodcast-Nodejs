@@ -73,6 +73,12 @@
   }
 
   function renderTV() {
+    // No live match: show the "match will begin soon" card, hide the broadcast.
+    const live = state.status === 'live';
+    document.getElementById('waiting-card').hidden = live;
+    document.getElementById('broadcast').hidden = !live;
+    if (!live) return;
+
     document.getElementById('sb-home-name').textContent = state.match.homeTeam;
     document.getElementById('sb-away-name').textContent = state.match.awayTeam;
     document.getElementById('sb-home-score').textContent = state.match.homeScore;

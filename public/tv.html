@@ -8,6 +8,17 @@
 </head>
 <body id="tv-page">
 
+  <!-- Shown whenever no match is live (before kick-off and after the match ends) -->
+  <div id="waiting-card" hidden>
+    <div class="waiting-inner">
+      <div class="waiting-kicker">Live Broadcast</div>
+      <div class="waiting-title">The match will begin soon</div>
+    </div>
+  </div>
+
+  <!-- Everything below is only visible while a match is live -->
+  <div id="broadcast" hidden>
+
   <!-- Main scorebug -->
   <div id="scorebug">
     <span id="sb-home-name" class="scorebug-team">HOME</span>
@@ -132,6 +143,8 @@
 
   <!-- Replay watermark -->
   <div id="replay-overlay" class="overlay watermark">REPLAY</div>
+
+  </div><!-- /#broadcast -->
 
   <script src="tv.js"></script>
 </body>

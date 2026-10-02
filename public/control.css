@@ -139,3 +139,54 @@ select {
   font-size: 13px;
   border-bottom: 1px solid var(--border);
 }
+
+/* ---- Start / end match ---- */
+[hidden] { display: none !important; }
+
+.header-actions { display: flex; align-items: center; gap: 12px; }
+
+.start-menu {
+  max-width: 520px;
+  margin: 3rem auto;
+  padding: 0 1.5rem;
+}
+
+.form-error { color: var(--danger); font-size: 13px; margin: 0 0 1rem; }
+
+label.check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text);
+  text-transform: none;
+  letter-spacing: 0;
+  margin-bottom: 1rem;
+  cursor: pointer;
+}
+
+/* ---- Player stats ---- */
+.stats-panel { grid-column: 1 / -1; }
+.hint { color: var(--muted); font-size: 12px; margin: 0 0 1rem; }
+.stats-columns { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem; }
+.stats-columns h3 { margin: 0 0 8px; font-size: 14px; }
+.stat-list { max-height: 360px; overflow-y: auto; }
+.stat-row {
+  display: grid;
+  grid-template-columns: 1fr repeat(3, auto);
+  align-items: center;
+  gap: 10px;
+  padding: 5px 4px;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+.stat-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.stat-cell { display: flex; align-items: center; gap: 4px; }
+.stat-cell .lbl { color: var(--muted); font-size: 11px; width: 12px; }
+.stat-cell .val { min-width: 18px; text-align: center; font-weight: 700; font-variant-numeric: tabular-nums; }
+.stat-cell button {
+  width: 24px; height: 24px; padding: 0; line-height: 1;
+  background: var(--surface2); border: 1px solid var(--border2);
+  color: var(--text); border-radius: 6px; cursor: pointer;
+}
+.stat-cell button:hover { border-color: #555; }

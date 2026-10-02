@@ -9,9 +9,33 @@
 <body id="control-page">
   <header>
     <h1>Broadcast Control Panel</h1>
-    <span id="ws-status" class="ws-status">connecting…</span>
+    <div class="header-actions">
+      <span id="ws-status" class="ws-status">connecting…</span>
+      <button class="btn danger" onclick="logout()">Logout</button>
+    </div>
   </header>
-  <main class="dashboard">
+
+  <!-- Shown when no match is running -->
+  <main id="start-menu" class="start-menu" hidden>
+    <section class="panel">
+      <h2>Start a Match</h2>
+      <div class="form-row">
+        <div>
+          <label for="start-home">Home Team</label>
+          <select id="start-home"></select>
+        </div>
+        <div>
+          <label for="start-away">Away Team</label>
+          <select id="start-away"></select>
+        </div>
+      </div>
+      <p id="start-error" class="form-error" hidden></p>
+      <button class="btn primary" id="btn-start-match" onclick="startMatch()">Start Match</button>
+    </section>
+  </main>
+
+  <!-- Shown only while a match is live -->
+  <main id="live-controls" class="dashboard" hidden>
     <section class="panel">
       <h2>Match Control</h2>
       <div class="form-row">
@@ -247,8 +271,25 @@
       </div>
     </section>
 
-    <section class="panel" style="text-align: center; margin-bottom: 20px;">
-      <button class="btn danger" style="width: 100%;" onclick="logout()">Logout</button>
+    <section class="panel stats-panel">
+      <h2>Player Stats</h2>
+      <p class="hint">Goals and assists are added automatically by the Goal Event. Use +/- here to record fouls or fix a mistake (a foul also updates the team's foul count).</p>
+      <div class="stats-columns">
+        <div>
+          <h3 id="stats-home-title">Home</h3>
+          <div id="stats-home" class="stat-list"></div>
+        </div>
+        <div>
+          <h3 id="stats-away-title">Away</h3>
+          <div id="stats-away" class="stat-list"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>End Match</h2>
+      <label class="check"><input type="checkbox" id="end-save" checked> Record result and player stats</label>
+      <button class="btn danger" style="width: 100%;" onclick="endMatch()">End Match</button>
     </section>
   </main>
 

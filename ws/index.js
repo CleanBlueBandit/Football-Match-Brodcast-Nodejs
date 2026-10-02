@@ -41,6 +41,13 @@ function getDefaultState() {
     },
     goals: [],
     table: [],
+    // Per-match player stats, keyed by shirt number: { home: { '7': { number, name, goals, assists, fouls } }, away: {...} }.
+    // Kept apart from state.players so removing a player mid-match doesn't lose their goals.
+    playerStats: { home: {}, away: {} },
+    // 'idle' = no match running (control shows the start menu, TV shows the
+    // "match will begin soon" card). 'live' = a match is in progress.
+    status: 'idle',
+    currentMatch: null, // { homeId, awayId } while live
   };
 }
 
@@ -79,44 +86,154 @@ function mergeDefaults(saved = {}) {
     },
     goals: Array.isArray(saved.goals) ? saved.goals : [],
     table: Array.isArray(saved.table) ? saved.table : [],
+    playerStats: {
+      home: saved.playerStats?.home && typeof saved.playerStats.home === 'object' ? saved.playerStats.home : {},
+      away: saved.playerStats?.away && typeof saved.playerStats.away === 'object' ? saved.playerStats.away : {},
+    },
+    // A saved match only counts as live if we still know which teams played.
+    status: saved.status === 'live' && saved.currentMatch ? 'live' : 'idle',
+    currentMatch: saved.status === 'live' && saved.currentMatch ? saved.currentMatch : null,
   };
 }
 
-// Original tv.js fetched standings.json / players.json from the client on
-// every page load and wrote them into shared state. We do that once,
-// server-side, the first time app_state is created, so both control.html
-// and tv.html start from the same seed data without re-fetching on load.
-function seedFromFiles() {
-  const publicDir = path.join(__dirname, '..', 'public');
+// ---------------------------------------------------------------------------
+// League data (data/league.json): teams, their squads and their standings.
+// This is the single source of truth for team selection and the league table.
+// ---------------------------------------------------------------------------
+const STAT_FIELDS = ['goals', 'assists', 'fouls'];
+const LEAGUE_PATH = path.join(__dirname, '..', 'data', 'league.json');
+let league = { teams: [] };
 
+function loadLeague() {
   try {
-    const standingsPath = path.join(publicDir, 'standings.json');
-    if (fs.existsSync(standingsPath)) {
-      state.table = JSON.parse(fs.readFileSync(standingsPath, 'utf8'));
-    }
+    const data = JSON.parse(fs.readFileSync(LEAGUE_PATH, 'utf8'));
+    if (!Array.isArray(data.teams)) throw new Error('"teams" must be an array');
+    // Every player always carries the three stat fields, so the file is uniform.
+    data.teams.forEach((t) => {
+      t.players = Array.isArray(t.players) ? t.players : [];
+      t.players.forEach((p) => STAT_FIELDS.forEach((f) => { p[f] = Number(p[f]) || 0; }));
+    });
+    league = data;
   } catch (err) {
-    console.warn('Could not seed standings.json:', err.message);
-  }
-
-  try {
-    const playersPath = path.join(publicDir, 'players.json');
-    if (fs.existsSync(playersPath)) {
-      const data = JSON.parse(fs.readFileSync(playersPath, 'utf8'));
-      state.players.home = data.home || [];
-      state.players.away = data.away || [];
-    }
-  } catch (err) {
-    console.warn('Could not seed players.json:', err.message);
+    // Keep whatever we had before rather than wiping the team list.
+    console.error('Could not load data/league.json:', err.message);
   }
 }
 
+function saveLeague() {
+  try {
+    const tmp = LEAGUE_PATH + '.tmp';
+    fs.writeFileSync(tmp, JSON.stringify(league, null, 2) + '\n');
+    fs.renameSync(tmp, LEAGUE_PATH); // atomic swap, so a crash can't leave a half-written file
+  } catch (err) {
+    console.error('Could not save data/league.json:', err.message);
+  }
+}
+
+const findTeam = (id) => league.teams.find((t) => t.id === id);
+// A clean copy of a squad for a new match: shirt number + name only. The
+// running totals stay in league.json; the match tracks its own numbers.
+const clonePlayers = (list) =>
+  Array.isArray(list) ? list.map((p) => ({ number: p.number, name: p.name })) : [];
+
+// Gets (or creates) the match-stat record for a player on 'home' / 'away'.
+function statEntry(side, number, name) {
+  if (!state.playerStats[side] || number === undefined || number === null || number === '') return null;
+  const key = String(number);
+  let e = state.playerStats[side][key];
+  if (!e) {
+    e = { number: Number.isFinite(Number(number)) ? Number(number) : key, name: name || '', goals: 0, assists: 0, fouls: 0 };
+    state.playerStats[side][key] = e;
+  } else if (name && !e.name) {
+    e.name = name;
+  }
+  return e;
+}
+
+// Adds this match's player stats onto each player's running totals in league.json.
+function recordPlayerStats(side, team) {
+  for (const st of Object.values(state.playerStats?.[side] || {})) {
+    if (!st.goals && !st.assists && !st.fouls) continue;
+    let p = team.players.find((pl) => String(pl.number) === String(st.number));
+    if (!p) {
+      // e.g. a player added from the control panel during the match
+      p = { number: st.number, name: st.name, goals: 0, assists: 0, fouls: 0 };
+      team.players.push(p);
+    }
+    STAT_FIELDS.forEach((f) => { p[f] = (p[f] || 0) + (st[f] || 0); });
+  }
+}
+
+// Shape matches what tv.js's table overlay reads (pos / team / p / pts);
+// the extra fields are there for any future layout.
+function buildTable() {
+  return league.teams
+    .map((t) => {
+      const gf = t.gf || 0;
+      const ga = t.ga || 0;
+      return {
+        id: t.id,
+        team: t.name,
+        p: t.played || 0,
+        w: t.won || 0,
+        d: t.drawn || 0,
+        l: t.lost || 0,
+        gf,
+        ga,
+        gd: gf - ga,
+        pts: t.points || 0,
+      };
+    })
+    .sort((a, b) => b.pts - a.pts || b.gd - a.gd || b.gf - a.gf || a.team.localeCompare(b.team))
+    .map((row, i) => ({ pos: i + 1, ...row }));
+}
+
+// What clients actually receive: persisted match state + live league data.
+// The table and team list are derived from league.json, never stored in
+// Postgres, so they can't go stale.
+function publicState() {
+  return {
+    ...state,
+    table: buildTable(),
+    teams: league.teams.map((t) => ({ id: t.id, name: t.name })),
+  };
+}
+
+// Adds the finished match to both teams' standings and writes league.json.
+function recordResult() {
+  const home = findTeam(state.currentMatch?.homeId);
+  const away = findTeam(state.currentMatch?.awayId);
+  if (!home || !away) return;
+
+  const hs = state.match.homeScore;
+  const as = state.match.awayScore;
+  const add = (t, key, n) => { t[key] = (t[key] || 0) + n; };
+
+  add(home, 'played', 1); add(away, 'played', 1);
+  add(home, 'gf', hs);    add(home, 'ga', as);
+  add(away, 'gf', as);    add(away, 'ga', hs);
+
+  if (hs > as)      { add(home, 'won', 1);   add(home, 'points', 3); add(away, 'lost', 1); }
+  else if (hs < as) { add(away, 'won', 1);   add(away, 'points', 3); add(home, 'lost', 1); }
+  else              { add(home, 'drawn', 1); add(home, 'points', 1); add(away, 'drawn', 1); add(away, 'points', 1); }
+
+  recordPlayerStats('home', home);
+  recordPlayerStats('away', away);
+
+  saveLeague();
+}
+
+function clearAutoHideTimers() {
+  Object.values(autoHideTimers).forEach(clearTimeout);
+}
+
 async function loadState() {
+  loadLeague();
   const result = await pool.query('SELECT data FROM app_state WHERE id = 1');
   if (result.rows.length > 0) {
     state = mergeDefaults(result.rows[0].data);
   } else {
     state = getDefaultState();
-    seedFromFiles();
     await pool.query('INSERT INTO app_state (id, data) VALUES (1, $1)', [state]);
   }
 }
@@ -138,7 +255,7 @@ function scheduleSave() {
 
 function broadcast() {
   if (!wss) return;
-  const msg = JSON.stringify({ type: 'state', state });
+  const msg = JSON.stringify({ type: 'state', state: publicState() });
   wss.clients.forEach((client) => {
     if (client.readyState === WebSocket.OPEN) client.send(msg);
   });
@@ -164,7 +281,38 @@ function scheduleAutoHide(key) {
 // One case per window.* function the control panel used to call directly
 // against its local `state` object before POSTing to save_state.php.
 function applyCommand(cmd) {
+  // Nothing but starting a match makes sense while no match is running
+  // (e.g. a stale control tab still showing the old controls).
+  if (state.status !== 'live' && cmd.action !== 'startMatch') return false;
+
   switch (cmd.action) {
+    case 'startMatch': {
+      if (state.status === 'live') return false; // never overwrite a running match
+      loadLeague();
+      const home = findTeam(cmd.homeId);
+      const away = findTeam(cmd.awayId);
+      if (!home || !away || home.id === away.id) return false;
+
+      clearAutoHideTimers();
+      const fresh = getDefaultState();
+      fresh.match.homeTeam = home.name;
+      fresh.match.awayTeam = away.name;
+      fresh.players.home = clonePlayers(home.players);
+      fresh.players.away = clonePlayers(away.players);
+      fresh.status = 'live';
+      fresh.currentMatch = { homeId: home.id, awayId: away.id };
+      state = fresh;
+      ['home', 'away'].forEach((side) => state.players[side].forEach((p) => statEntry(side, p.number, p.name)));
+      break;
+    }
+
+    case 'endMatch': {
+      if (cmd.saveResult !== false) recordResult();
+      clearAutoHideTimers();
+      state = getDefaultState(); // idle, clock stopped, overlays/goals/scores cleared
+      break;
+    }
+
     case 'toggleTimer':
       state.match.isRunning = !state.match.isRunning;
       break;
@@ -206,8 +354,27 @@ function applyCommand(cmd) {
 
     case 'addPlayer':
       if (!state.players[cmd.team]) return false;
+      // Stats are keyed by shirt number, so numbers must be unique within a team.
+      if (state.players[cmd.team].some((p) => String(p.number) === String(cmd.number))) return false;
       state.players[cmd.team].push({ name: cmd.name, number: cmd.number });
+      statEntry(cmd.team, cmd.number, cmd.name);
       break;
+
+    case 'adjustPlayerStat': {
+      if (!state.players[cmd.team] || !STAT_FIELDS.includes(cmd.field)) return false;
+      const squadPlayer = state.players[cmd.team].find((p) => String(p.number) === String(cmd.number));
+      const entry = statEntry(cmd.team, cmd.number, squadPlayer?.name);
+      if (!entry) return false;
+      const delta = Number(cmd.delta) < 0 ? -1 : 1;
+      const before = entry[cmd.field];
+      entry[cmd.field] = Math.max(0, before + delta);
+      // A player foul is also a team foul, so keep the team counter in step.
+      if (cmd.field === 'fouls' && entry[cmd.field] !== before) {
+        const teamKey = cmd.team === 'home' ? 'homeFouls' : 'awayFouls';
+        state.match[teamKey] = Math.max(0, (state.match[teamKey] || 0) + delta);
+      }
+      break;
+    }
 
     case 'removePlayer':
       if (!state.players[cmd.team]) return false;
@@ -227,6 +394,12 @@ function applyCommand(cmd) {
         assistNumber: cmd.assistNumber || '',
       };
       state.goals.push({ scorer: cmd.scorerName || '', minute: state.match.time, team: cmd.team });
+      if (cmd.team === 'home' || cmd.team === 'away') {
+        const scorer = statEntry(cmd.team, cmd.scorerNumber, cmd.scorerName);
+        if (scorer) scorer.goals += 1;
+        const assister = statEntry(cmd.team, cmd.assistNumber, cmd.assistName);
+        if (assister) assister.assists += 1;
+      }
       break;
     }
 
@@ -317,7 +490,10 @@ function setupWebSocket(server) {
   wss.on('connection', (ws) => {
     // Every new connection - control panel tab or tv.html output - gets
     // an immediate snapshot, same as the old initial GET of state.json.
-    if (state) ws.send(JSON.stringify({ type: 'state', state }));
+    if (state) {
+      if (state.status === 'idle') loadLeague(); // pick up hand-edits to league.json between matches
+      ws.send(JSON.stringify({ type: 'state', state: publicState() }));
+    }
 
     ws.on('message', (raw) => {
       let msg;
@@ -326,7 +502,7 @@ function setupWebSocket(server) {
       } catch {
         return;
       }
-      if (msg && msg.type === 'command' && applyCommand(msg)) {
+      if (msg && msg.type === 'command' && state && applyCommand(msg)) {
         scheduleSave();
         broadcast();
       }
@@ -335,7 +511,7 @@ function setupWebSocket(server) {
 
   process.on('SIGTERM', () => {
     clearInterval(timerInterval);
-    Object.values(autoHideTimers).forEach(clearTimeout);
+    clearAutoHideTimers();
   });
 }
 

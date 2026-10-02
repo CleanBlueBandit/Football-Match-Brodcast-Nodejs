@@ -102,6 +102,10 @@ window.addPlayer = function (team) {
     alert('Enter name and number');
     return;
   }
+  if (state && (state.players[team] || []).some((p) => String(p.number) === String(number))) {
+    alert(`Shirt number ${number} is already taken on this team.`);
+    return;
+  }
   send('addPlayer', { team, name, number });
   nameInput.value = '';
   numInput.value = '';
@@ -213,6 +217,110 @@ window.quickRefCall = function (call) {
   send('quickRefCall', { call });
 };
 
+// ---- Player stats (goals / assists / fouls) ----
+
+// Delegated click handler: the rows are rebuilt when stats change, so
+// individual button listeners would be lost.
+document.addEventListener('click', (e) => {
+  const btn = e.target.closest('button[data-stat]');
+  if (!btn) return;
+  send('adjustPlayerStat', {
+    team: btn.dataset.team,
+    number: btn.dataset.number,
+    field: btn.dataset.stat,
+    delta: Number(btn.dataset.delta),
+  });
+});
+
+let statsSignature = '';
+function renderPlayerStats() {
+  const sig = JSON.stringify([state.players, state.playerStats, state.match.homeTeam, state.match.awayTeam]);
+  if (sig === statsSignature) return; // don't rebuild (and eat clicks) on every clock tick
+  statsSignature = sig;
+
+  const fields = [['goals', 'G'], ['assists', 'A'], ['fouls', 'F']];
+  ['home', 'away'].forEach((team) => {
+    const title = document.getElementById(`stats-${team}-title`);
+    if (title) title.textContent = team === 'home' ? state.match.homeTeam : state.match.awayTeam;
+    const el = document.getElementById(`stats-${team}`);
+    if (!el) return;
+    const stats = (state.playerStats && state.playerStats[team]) || {};
+    el.innerHTML =
+      (state.players[team] || [])
+        .map((p) => {
+          const st = stats[String(p.number)] || { goals: 0, assists: 0, fouls: 0 };
+          const cells = fields
+            .map(([f, label]) => {
+              const data = `data-team="${team}" data-number="${escapeHtml(String(p.number))}" data-stat="${f}"`;
+              return `<span class="stat-cell"><span class="lbl">${label}</span>` +
+                `<button ${data} data-delta="-1">-</button><span class="val">${st[f] || 0}</span>` +
+                `<button ${data} data-delta="1">+</button></span>`;
+            })
+            .join('');
+          return `<div class="stat-row"><span class="stat-name">${escapeHtml(String(p.number))} ${escapeHtml(p.name)}</span>${cells}</div>`;
+        })
+        .join('') || '<div class="hint">No players</div>';
+  });
+}
+
+// ---- Start / end match ----
+
+window.startMatch = function () {
+  const homeId = document.getElementById('start-home').value;
+  const awayId = document.getElementById('start-away').value;
+  const err = document.getElementById('start-error');
+  if (!homeId || !awayId) {
+    err.textContent = 'No teams available. Add some to data/league.json.';
+    err.hidden = false;
+    return;
+  }
+  if (homeId === awayId) {
+    err.textContent = 'Pick two different teams.';
+    err.hidden = false;
+    return;
+  }
+  err.hidden = true;
+  send('startMatch', { homeId, awayId });
+};
+
+window.endMatch = function () {
+  if (!state) return;
+  const m = state.match;
+  const save = document.getElementById('end-save').checked;
+  const summary = `${m.homeTeam} ${m.homeScore} - ${m.awayScore} ${m.awayTeam}`;
+  const note = save
+    ? 'The result and player stats will be saved to the league data.'
+    : 'The result and player stats will NOT be saved.';
+  if (!confirm(`End the match?\n\n${summary}\n${note}`)) return;
+  send('endMatch', { saveResult: save });
+};
+
+// Rebuilds the team dropdowns only when the team list changes, so a
+// broadcast never resets a selection the operator is in the middle of making.
+let teamListSignature = '';
+function populateTeamSelects() {
+  const teams = state.teams || [];
+  const signature = teams.map((t) => `${t.id}:${t.name}`).join('|');
+  if (signature === teamListSignature) return;
+  teamListSignature = signature;
+
+  const opts = teams.map((t) => `<option value="${escapeHtml(t.id)}">${escapeHtml(t.name)}</option>`).join('');
+  const home = document.getElementById('start-home');
+  const away = document.getElementById('start-away');
+  home.innerHTML = opts;
+  away.innerHTML = opts;
+  if (teams.length > 1) away.selectedIndex = 1;
+}
+
+// Returns true when a match is live. Idle -> start menu, live -> controls.
+function renderMode() {
+  const live = state.status === 'live';
+  document.getElementById('start-menu').hidden = live;
+  document.getElementById('live-controls').hidden = !live;
+  if (!live) populateTeamSelects();
+  return live;
+}
+
 // ---- Render ----
 
 function updateTimerDisplay() {
@@ -250,6 +358,15 @@ function updateToggleButtons() {
 
 function renderControl() {
   if (!state) return;
+  if (!renderMode()) return; // no match running: nothing else to render
+
+  // Team dropdowns in the event panels show the real team names.
+  ['goal-team', 'card-team', 'sub-team'].forEach((id) => {
+    const el = document.getElementById(id);
+    if (!el || el.options.length < 2) return;
+    el.options[0].textContent = state.match.homeTeam;
+    el.options[1].textContent = state.match.awayTeam;
+  });
 
   const fieldMap = {
     'inp-home-formation': state.match.homeFormation,
@@ -281,6 +398,7 @@ function renderControl() {
   updateScoreDisplay();
   renderPlayerLists();
   populateGoalSelects();
+  renderPlayerStats();
   if (document.getElementById('card-team')) populatePlayers('card');
   if (document.getElementById('sub-team')) populatePlayers('sub');
   updateToggleButtons();

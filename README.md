@@ -49,13 +49,41 @@ checked `overlays.penaltyCall` — so on the real site that button silently did
 nothing. `ws/index.js` normalizes `'penalty'` → `'penaltyCall'` so the button
 now actually shows the penalty graphic.
 
-**Seed data.** The original `tv.js` fetched `standings.json` and
-`players.json` from the client on every page load just to write them into
-shared state. That's now done once, server-side, the first time `app_state`
-is created (see `seedFromFiles()` in `ws/index.js`) — edit
-`public/standings.json` / `public/players.json` before first run if you want
-different starting data, or just add players from the control panel's "Team
-Setup" section afterward.
+## Matches, teams and standings
+
+The app runs one match at a time, and you can run as many matches as you like
+one after another.
+
+- **`data/league.json`** is the source of truth for teams, squads and
+  standings. Each team has `id`, `name`, `played/won/drawn/lost/gf/ga/points`
+  and a `players` list (`{ "number": 7, "name": "..." }`). Add a team by
+  adding an entry; edits are picked up between matches without a restart.
+- **Start match:** with no match running, the control page shows only a
+  "Start a Match" menu (home team / away team). Starting loads both squads and
+  team names and reveals the controls. Match state (score, clock, overlays,
+  goals) always starts fresh.
+- **End match:** the button at the bottom of the controls (with a confirm
+  dialog and a "Record result in the league table" checkbox) stops the clock,
+  adds the result to `data/league.json` (3 pts win / 1 draw) and returns every
+  control tab to the start menu.
+- **TV page:** while no match is live, `tv.html` shows a "The match will begin
+  soon" card instead of the scorebug; it comes back automatically after a match
+  ends.
+- **Player stats:** every player in `league.json` has `goals`, `assists` and
+  `fouls` (running totals). During a match they are tracked per player in a
+  "Player Stats" panel: the Goal Event credits the scorer and assister
+  automatically, and the +/- buttons record fouls or correct mistakes (a foul
+  also bumps the team's foul count; goals/assists do not change the score).
+  When the match ends with "Record result and player stats" ticked, the
+  match's numbers are added onto each player's totals in `league.json`;
+  unticked, they are discarded. Shirt numbers must be unique within a team,
+  and a player added from the control panel mid-match is appended to the
+  team's squad in `league.json` if they recorded any stats.
+- The league table overlay is derived from `league.json` (sorted by points,
+  goal difference, goals scored), never stored in Postgres.
+
+Match commands (`toggleTimer`, `modScore`, ...) are ignored by the server while
+no match is live, and `startMatch` is ignored while one is.
 
 ## Setup
 
