@@ -6,9 +6,8 @@ const express = require('express');
 const session = require('express-session');
 const pgSessionFactory = require('connect-pg-simple');
 
-const { prisma, pool } = require('./db/prisma');
+const pool = require('./db/pool');
 const { setupWebSocket } = require('./ws');
-const { importStandings } = require('./db/importStandings');
 const requireAuth = require('./middleware/auth');
 const authRoutes = require('./routes/auth');
 
@@ -61,30 +60,9 @@ app.get('/src/background.jpg', (req, res) => {
 
 app.use(express.static(path.join(__dirname, 'public'), { index: false }));
 
+setupWebSocket(server);
+
 const PORT = process.env.PORT || 3000;
-
-async function start() {
-  // Load standings from the JSON file into Postgres before the websocket layer
-  // reads the teams table. A bad or missing file must not stop the server.
-  try {
-    await importStandings();
-  } catch (err) {
-    console.error('Standings import failed (continuing without it):', err);
-  }
-
-  setupWebSocket(server);
-  server.listen(PORT, () => {
-    console.log(`Broadcast control server listening on port ${PORT}`);
-  });
-}
-
-start();
-
-async function shutdown() {
-  server.close();
-  await prisma.$disconnect().catch(() => {});
-  await pool.end().catch(() => {});
-  process.exit(0);
-}
-process.on('SIGTERM', shutdown);
-process.on('SIGINT', shutdown);
+server.listen(PORT, () => {
+  console.log(`Broadcast control server listening on port ${PORT}`);
+});

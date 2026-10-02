@@ -1,9 +1,20 @@
 require('dotenv').config();
 
-const { prisma, pool } = require('./db/prisma');
+const { PrismaClient } = require('@prisma/client');
+const { PrismaPg } = require('@prisma/adapter-pg');
+const { Pool } = require('pg');
 const bcrypt = require('bcryptjs');
 const readline = require('readline/promises');
 const { stdin: input, stdout: output } = require('process');
+
+// Initialize pg pool using DATABASE_URL from .env
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+});
+
+// Configure Prisma v7 driver adapter
+const adapter = new PrismaPg(pool);
+const prisma = new PrismaClient({ adapter });
 
 async function main() {
   const rl = readline.createInterface({ input, output });

@@ -1,6 +1,6 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
-const { prisma } = require('../db/prisma');
+const pool = require('../db/pool');
 
 const router = express.Router();
 
@@ -20,9 +20,10 @@ function sanitize(val) {
 
 async function logLoginEvent(username, success, message, ip) {
   try {
-    await prisma.loginEvent.create({
-      data: { username: sanitize(username), success, message: sanitize(message), ip },
-    });
+    await pool.query(
+      `INSERT INTO login_events (username, success, message, ip) VALUES ($1,$2,$3,$4)`,
+      [sanitize(username), success, sanitize(message), ip]
+    );
   } catch (err) {
     console.error('Login log error:', err.message);
   }
@@ -46,19 +47,19 @@ router.post('/login', async (req, res) => {
   }
 
   try {
-    const user = await prisma.user.findUnique({
-      where: { username },
-      select: { id: true, passwordHash: true },
-    });
+    const result = await pool.query(
+      'SELECT id, password_hash FROM users WHERE username = $1',
+      [username]
+    );
 
-    if (!user) {
+    if (result.rows.length === 0) {
       const msg = 'No account found with that username.';
       await logLoginEvent(username, false, msg, ip);
       return res.status(401).json({ error: msg });
     }
 
-    const { id, passwordHash } = user;
-    const match = await bcrypt.compare(password, normalizeBcryptHash(passwordHash));
+    const { id, password_hash } = result.rows[0];
+    const match = await bcrypt.compare(password, normalizeBcryptHash(password_hash));
 
     if (!match) {
       const msg = 'Invalid password.';
