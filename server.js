@@ -10,7 +10,6 @@ const pool = require('./db/pool');
 const { setupWebSocket } = require('./ws');
 const requireAuth = require('./middleware/auth');
 const authRoutes = require('./routes/auth');
-const { Prisma } = require('@prisma/client/extension');
 
 const PgSession = pgSessionFactory(session);
 
@@ -31,7 +30,7 @@ app.use(
     cookie: {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      maxAge: 1000 * 60 * 60 * 8, // 8 hours, mirrors typical PHP session lifetime
+      maxAge: 1000 * 60 * 60 * 8,
     },
   })
 );
@@ -42,13 +41,11 @@ app.use('/api', authRoutes);
 
 
 
-// login.php (GET part) -> if already logged in, bounce to control.html
 app.get('/login.html', (req, res) => {
   if (req.session.loggedin) return res.redirect('/control.html');
   res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
 
-// control.php -> protected by auth_lock.php equivalent
 app.get('/control.html', requireAuth, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'control.html'));
 });
