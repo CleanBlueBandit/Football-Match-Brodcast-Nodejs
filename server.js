@@ -44,12 +44,7 @@ app.use('/api', authRoutes);
 app.use('/api', exportRoutes);
 app.use('/api', matchRoutes);
 
-// ---- Pages -----------------------------------------------------------------
-// The role-restricted pages live in views/ (not in public/) so they can only be
-// reached through these guarded routes.
-//   /control  admin, broadcaster   live broadcast control
-//   /stats    admin, statistician  statistics
-//   /tv.html  everyone, no login   the broadcast output (OBS can't log in)
+
 app.get('/login', (req, res) => {
   if (isLoggedIn(req)) return res.redirect(homeFor(req.session.role));
   res.sendFile(path.join(__dirname, 'public', 'login.html'));
@@ -97,6 +92,7 @@ async function start() {
 start();
 
 async function shutdown() {
+  console.log("Server shutting down...");
   server.close();
   await prisma.$disconnect().catch(() => {});
   await pool.end().catch(() => {});
