@@ -34,13 +34,72 @@
     });
   }
 
-  // Defensive normalization, same intent as the original tv.js's
-  // post-sync sanitize step for the `var` overlay.
+  // The server (ws/index.js) sends:
+  //   match.{homeTeam,awayTeam}  team ids        match.timer  seconds
+  //   teams[], players[] (flat, with teamId), table[], goalHistory[]
+  //   overlay: { visible, type, data }           (one overlay at a time)
+  // The renderer below was written for a richer per-overlay shape, so convert
+  // the server state into that shape here.
   function sanitize(s) {
-    if (s.overlays && typeof s.overlays.var !== 'object') {
-      s.overlays.var = { visible: !!s.overlays.var, phase: '', checkType: '', verdict: '' };
-    }
-    return s;
+    const m = s.match || {};
+    const teams = s.teams || [];
+    const players = s.players || [];
+    const nameOf = (id) => (teams.find((t) => t.id === id) || {}).name || id || '';
+    const side = (id) => players.filter((p) => p.teamId === id);
+    const sum = (list, key) => list.reduce((n, p) => n + (p[key] || 0), 0);
+
+    // A match is on screen once two teams are chosen (the final score stays
+    // up after "End Match", same rule the control panel uses).
+    const live = !!(m.homeTeam && m.awayTeam);
+
+    const ov = s.overlay || {};
+    const on = (type) => !!(ov.visible && ov.type === type);
+
+    return {
+      status: live ? 'live' : 'waiting',
+      match: {
+        homeTeam: nameOf(m.homeTeam),
+        awayTeam: nameOf(m.awayTeam),
+        homeScore: m.homeScore || 0,
+        awayScore: m.awayScore || 0,
+        homePossession: m.homePossession ?? 50,
+        awayPossession: m.awayPossession ?? 50,
+        homeFouls: sum(side(m.homeTeam), 'fouls'),
+        awayFouls: sum(side(m.awayTeam), 'fouls'),
+        homeFormation: '4-3-3',
+        awayFormation: '4-3-3',
+        time: m.timer || 0,
+        addedTime: 0,
+      },
+      players: { home: side(m.homeTeam), away: side(m.awayTeam) },
+      goals: (s.goalHistory || []).map((g) => ({
+        team: g.side,
+        scorer: g.playerName,
+        // The server stores whole minutes; renderGoalHistory expects seconds.
+        minute: (Number(g.minute) || 0) * 60,
+      })),
+      table: (s.table || []).map((r, i) => ({
+        pos: i + 1,
+        team: r.name,
+        p: r.played,
+        pts: r.points,
+      })),
+      overlays: {
+        goal: { visible: false },
+        card: { visible: false },
+        sub: { visible: false },
+        var: { visible: on('var'), phase: '', checkType: '', verdict: '' },
+        possession: on('possession'),
+        fouls: on('fouls'),
+        formations: on('formations'),
+        table: on('table'),
+        offside: on('offside'),
+        advantage: on('advantage'),
+        penaltyCall: on('penalty') || on('penaltyCall'),
+        handball: on('handball'),
+        replay: on('replay'),
+      },
+    };
   }
 
   function formatTime(sec) {
@@ -296,7 +355,7 @@
       const tBody = document.getElementById('table-body');
       if (tBody && state.table) {
         tBody.innerHTML = state.table
-          .map((r) => `<tr><td>${r.pos}</td><td>${r.team}</td><td>${r.p}</td><td>${r.pts}</td></tr>`)
+          .map((r) => `<tr><td>${r.pos}</td><td>${String(r.team).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]))}</td><td>${r.p}</td><td>${r.pts}</td></tr>`)
           .join('');
       }
       t.classList.add('active');
