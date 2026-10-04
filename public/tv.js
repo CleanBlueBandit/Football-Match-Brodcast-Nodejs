@@ -1,4 +1,11 @@
 (function () {
+
+  window.addEventListener("pageshow", (e) => {
+    if(e.persisted){
+      window.location.reload();
+    }
+  })
+
   const FORMATIONS = {
     '4-3-3': [{ t: 85, l: 50 }, { t: 65, l: 15 }, { t: 65, l: 38 }, { t: 65, l: 62 }, { t: 65, l: 85 }, { t: 40, l: 20 }, { t: 40, l: 50 }, { t: 40, l: 80 }, { t: 15, l: 20 }, { t: 15, l: 50 }, { t: 15, l: 80 }],
     '4-4-2': [{ t: 85, l: 50 }, { t: 65, l: 15 }, { t: 65, l: 38 }, { t: 65, l: 62 }, { t: 65, l: 85 }, { t: 40, l: 12 }, { t: 40, l: 37 }, { t: 40, l: 63 }, { t: 40, l: 88 }, { t: 15, l: 35 }, { t: 15, l: 65 }],
@@ -19,8 +26,7 @@
     });
 
     socket.addEventListener('close', () => {
-      setTimeout(connectWebSocket, reconnectDelay);
-      reconnectDelay = Math.min(reconnectDelay * 2, 15000);
+      window.location.reload();
     });
 
     socket.addEventListener('error', () => socket.close());
