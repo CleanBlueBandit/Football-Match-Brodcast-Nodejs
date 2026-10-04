@@ -22,7 +22,7 @@ function getDefaultState() {
     },
     players: { home: [], away: [] },
     overlays: {
-      goal: { visible: false, team: '', scorer: '', assist: '', number: '', assistNumber: '' },
+      goal: { visible: false, team: '', scorer: '', assist: '', number: '', assistNumber: '', selfGoal: false },
       possession: false,
       fouls: false,
       card: { visible: false, player: '', type: '', team: '', number: '' },
@@ -437,19 +437,35 @@ async function applyCommand(cmd) {
       break;
 
     case 'triggerGoal': {
-      const teamNameKey = cmd.team === 'home' ? 'homeTeam' : 'awayTeam';
-      const scoreKey = cmd.team === 'home' ? 'homeScore' : 'awayScore';
+      // cmd.team is the team of the player who put the ball in. For an self goal
+      // that player scored in his own goalpost, so the point goes to the other team.
+      if (cmd.team !== 'home' && cmd.team !== 'away') return false;
+      const selfGoal = cmd.selfGoal === true;
+      const creditedSide = selfGoal ? (cmd.team === 'home' ? 'away' : 'home') : cmd.team;
+      const teamNameKey = creditedSide === 'home' ? 'homeTeam' : 'awayTeam';
+      const scoreKey = creditedSide === 'home' ? 'homeScore' : 'awayScore';
       state.match[scoreKey] += 1;
       state.overlays.goal = {
         visible: true,
         team: state.match[teamNameKey],
         scorer: cmd.scorerName || '',
         number: cmd.scorerNumber || '',
-        assist: cmd.assistName || '',
-        assistNumber: cmd.assistNumber || '',
+        // An self goal has no assist.
+        assist: selfGoal ? '' : cmd.assistName || '',
+        assistNumber: selfGoal ? '' : cmd.assistNumber || '',
+        selfGoal,
       };
-      state.goals.push({ scorer: cmd.scorerName || '', minute: state.match.time, team: cmd.team });
-      if (cmd.team === 'home' || cmd.team === 'away') {
+      // `team` is the side the goal counts for (it decides which column of the
+      // goal history it appears in); `scorerTeam` is the scorer's own team.
+      state.goals.push({
+        scorer: cmd.scorerName || '',
+        minute: state.match.time,
+        team: creditedSide,
+        scorerTeam: cmd.team,
+        selfGoal,
+      });
+      // Self goals don't count towards the player's goals tally or an assist.
+      if (!selfGoal) {
         const scorer = statEntry(cmd.team, cmd.scorerNumber, cmd.scorerName);
         if (scorer) scorer.goals += 1;
         const assister = statEntry(cmd.team, cmd.assistNumber, cmd.assistName);

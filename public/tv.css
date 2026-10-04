@@ -65,8 +65,9 @@ html, body { margin: 0; padding: 0; font-family: var(--font-main); }
 .scorebug-big {
   top: 20vh !important;
   padding: 1% 2% !important;
-  gap: 55px !important;
-  font-size: 110px !important;
+  gap: min(55px, 2vw) !important;
+  font-size: min(110px, 4.4vw) !important;
+  max-width: 68vw;
 }
 .scorebug-team { text-transform: uppercase; min-width: 110px; text-align: center; letter-spacing: 1px; }
 .scorebug-score {
@@ -101,9 +102,57 @@ html, body { margin: 0; padding: 0; font-family: var(--font-main); }
 .overlay.active { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); pointer-events: none; }
 
 
-#goal-history-overlay{
-  top: 60vh;
+/* Goal history: permanent columns at the left (home) and right (away) edges,
+   spanning 80% of the screen height, centred vertically. */
+.goal-side {
+  position: absolute;
+  top: 10vh;
+  height: 80vh;
+  width: 14vw;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  padding: 16px 14px;
+  overflow: hidden;
+  background: rgba(0,0,0,0.78);
+  border-radius: 14px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+  border: 1px solid rgba(255,255,255,0.08);
 }
+.goal-side-home { left: 1vw; border-top: 5px solid var(--home-color); }
+.goal-side-away { right: 1vw; border-top: 5px solid var(--away-color); text-align: right; }
+.gh-title {
+  margin: 0 0 12px;
+  padding-bottom: 10px;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-size: clamp(14px, 1.4vw, 28px);
+  border-bottom: 2px solid var(--accent);
+}
+.goal-side-home .gh-title { color: var(--home-color); }
+.goal-side-away .gh-title { color: var(--away-color); }
+.gh-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow: hidden;
+  min-height: 0;
+}
+.gh-item {
+  font-size: clamp(13px, 1.2vw, 24px);
+  font-weight: 700;
+  line-height: 1.25;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  overflow-wrap: anywhere;
+}
+.gh-minute { color: var(--accent); font-variant-numeric: tabular-nums; margin: 0 4px; white-space: nowrap; }
+.gh-sg { color: #ff5555; font-size: 0.8em; white-space: nowrap; }
+.gh-empty { color: #888; font-weight: 400; border-bottom: none; }
 
 
 

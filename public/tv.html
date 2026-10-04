@@ -36,7 +36,7 @@
 
   <!-- Goal lower third -->
   <div id="goal-overlay" class="overlay lower-third">
-    <div class="goal-title">GOAL!</div>
+    <div id="g-title" class="goal-title">GOAL!</div>
     <div id="g-team" class="goal-team">HOME</div>
     <div id="g-scorer" class="goal-player"></div>
     <div id="g-assist" class="goal-assist"></div>
@@ -118,20 +118,15 @@
     </table>
   </div>
 
-  <!-- Goal history -->
-  <div id="goal-history-overlay" class="overlay side-panel">
-    <h2 style="margin:0 0 18px; text-align:center; text-transform:uppercase;">Goal History</h2>
-    <div style="display:grid; grid-template-columns:1fr 1fr; gap:30px;">
-      <div>
-        <h3 id="gh-home-team" style="margin:0 0 10px; color:var(--home-color);"></h3>
-        <div id="goal-history-home"></div>
-      </div>
-      <div>
-        <h3 id="gh-away-team" style="margin:0 0 10px; color:var(--away-color);"></h3>
-        <div id="goal-history-away"></div>
-      </div>
-    </div>
-  </div>
+  <!-- Goal history: always on screen, one column down each side of the scorebug -->
+  <aside id="goal-history-left" class="goal-side goal-side-home">
+    <h3 id="gh-home-team" class="gh-title"></h3>
+    <ul id="goal-history-home" class="gh-list"></ul>
+  </aside>
+  <aside id="goal-history-right" class="goal-side goal-side-away">
+    <h3 id="gh-away-team" class="gh-title"></h3>
+    <ul id="goal-history-away" class="gh-list"></ul>
+  </aside>
 
   <!-- Referee / quick-call graphics -->
   <div id="offside-overlay" class="overlay popup small-ref">OFFSIDE</div>

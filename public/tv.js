@@ -49,6 +49,38 @@
     return `${m}:${s}`;
   }
 
+  // Goals are listed under the team they count for, so a self goal appears
+  // in the column of the team that benefited.
+  function renderGoalHistory(listId, side) {
+    const list = document.getElementById(listId);
+    if (!list) return;
+    list.textContent = '';
+    const goals = (state.goals || []).filter((gEv) => gEv.team === side);
+    if (goals.length === 0) {
+      const li = document.createElement('li');
+      li.className = 'gh-item gh-empty';
+      li.textContent = 'No goals';
+      list.appendChild(li);
+      return;
+    }
+    goals.forEach((gEv) => {
+      const li = document.createElement('li');
+      li.className = 'gh-item';
+      li.appendChild(document.createTextNode(gEv.scorer || 'Unknown'));
+      const minute = document.createElement('span');
+      minute.className = 'gh-minute';
+      minute.textContent = Math.floor((Number(gEv.minute) || 0) / 60) + 1 + "'";
+      li.appendChild(minute);
+      if (gEv.selfGoal) {
+        const og = document.createElement('span');
+        og.className = 'gh-sg';
+        og.textContent = '(SG)';
+        li.appendChild(og);
+      }
+      list.appendChild(li);
+    });
+  }
+
   function renderPitch(containerId, formation, players, colorVar) {
     const container = document.getElementById(containerId);
     if (!container) return;
@@ -94,7 +126,6 @@
       (state.overlays.var && state.overlays.var.visible) ||
       state.overlays.formations ||
       state.overlays.table ||
-      state.overlays.goalHistory ||
       state.overlays.offside ||
       state.overlays.advantage ||
       state.overlays.penaltyCall ||
@@ -149,6 +180,7 @@
 
     const g = document.getElementById('goal-overlay');
     if (state.overlays.goal.visible) {
+      document.getElementById('g-title').textContent = state.overlays.goal.selfGoal ? 'SELF GOAL!' : 'GOAL!';
       document.getElementById('g-team').textContent = state.overlays.goal.team;
       document.getElementById('g-scorer').textContent =
         (state.overlays.goal.number ? '#' + state.overlays.goal.number + ' ' : '') + state.overlays.goal.scorer;
@@ -276,18 +308,11 @@
       t.classList.add('active');
     } else t.classList.remove('active');
 
-    const gh = document.getElementById('goal-history-overlay');
-    if (state.overlays.goalHistory) {
-      document.getElementById('gh-home-team').textContent = state.match.homeTeam;
-      document.getElementById('gh-away-team').textContent = state.match.awayTeam;
-      document.getElementById('goal-history-home').innerHTML =
-        state.goals.filter((gEv) => gEv.team === 'home').map((gEv) => `${gEv.scorer}, '${gEv.minute}.`).join('<br>') ||
-        '<div style="color:#888;">No goals</div>';
-      document.getElementById('goal-history-away').innerHTML =
-        state.goals.filter((gEv) => gEv.team === 'away').map((gEv) => `${gEv.scorer}, '${gEv.minute}.`).join('<br>') ||
-        '<div style="color:#888;">No goals</div>';
-      gh.classList.add('active');
-    } else gh.classList.remove('active');
+    // Goal history is always visible; it just follows the goals list.
+    document.getElementById('gh-home-team').textContent = state.match.homeTeam;
+    document.getElementById('gh-away-team').textContent = state.match.awayTeam;
+    renderGoalHistory('goal-history-home', 'home');
+    renderGoalHistory('goal-history-away', 'away');
 
     document.getElementById('offside-overlay')?.classList.toggle('active', !!state.overlays.offside);
     document.getElementById('advantage-overlay')?.classList.toggle('active', !!state.overlays.advantage);

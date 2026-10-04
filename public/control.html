@@ -136,7 +136,7 @@
       <h2>Goal Event</h2>
       <div class="form-row">
         <div>
-          <label>Team</label>
+          <label>Scorer's Team</label>
           <select id="goal-team" onchange="populateGoalSelects()">
             <option value="home">HOME</option>
             <option value="away">AWAY</option>
@@ -151,6 +151,7 @@
           <select id="goal-assist"><option value="">-- None --</option></select>
         </div>
       </div>
+      <label class="check"><input type="checkbox" id="goal-self"> Self goal (scored in his own goalpost &ndash; the point goes to the other team)</label>
       <button class="btn primary" onclick="triggerGoal()">Trigger Goal Graphic</button>
       <button class="btn" onclick="hideOverlay('goal')">Hide</button>
     </section>
@@ -223,7 +224,6 @@
       <div class="toggle-grid">
         <button class="btn" id="btn-table" onclick="toggleOverlay('table')">Live Table</button>
         <button class="btn" id="btn-formations" onclick="toggleOverlay('formations')">Formations</button>
-        <button class="btn" id="btn-goal-history" onclick="toggleOverlay('goalHistory')">Goal History</button>
         <button class="btn" id="btn-var" onclick="toggleOverlay('var')">VAR Status</button>
         <button class="btn" id="btn-replay" onclick="toggleOverlay('replay')">Replay</button>
       </div>

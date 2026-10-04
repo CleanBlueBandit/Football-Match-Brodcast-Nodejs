@@ -137,8 +137,14 @@ function populateGoalSelects() {
   const team = document.getElementById('goal-team')?.value || 'home';
   const plist = state.players[team] || [];
   const opts = plist.map((p) => `<option value="${p.number}|${escapeHtml(p.name)}">${p.number} ${escapeHtml(p.name)}</option>`).join('');
+  // This runs on every state update (once a second while the clock runs), so
+  // keep whatever the operator already picked instead of resetting it.
+  const prevScorer = s.value;
+  const prevAssist = a ? a.value : '';
   s.innerHTML = opts;
   if (a) a.innerHTML = `<option value="">-- None --</option>${opts}`;
+  if ([...s.options].some((o) => o.value === prevScorer)) s.value = prevScorer;
+  if (a && [...a.options].some((o) => o.value === prevAssist)) a.value = prevAssist;
 }
 
 function populatePlayers(context) {
@@ -160,13 +166,17 @@ window.triggerGoal = function () {
   const sParts = (document.getElementById('goal-scorer').value || '').split('|');
   const assistVal = document.getElementById('goal-assist').value;
   const aParts = assistVal ? assistVal.split('|') : ['', ''];
+  const ownEl = document.getElementById('goal-self');
+  const selfGoal = !!(ownEl && ownEl.checked);
   send('triggerGoal', {
     team: document.getElementById('goal-team').value,
+    selfGoal,
     scorerNumber: sParts[0],
     scorerName: sParts[1],
-    assistNumber: aParts[0],
-    assistName: aParts[1],
+    assistNumber: selfGoal ? '' : aParts[0],
+    assistName: selfGoal ? '' : aParts[1],
   });
+  if (ownEl) ownEl.checked = false; // don't carry "self goal" over to the next goal
 };
 
 window.triggerCard = function () {
@@ -349,7 +359,6 @@ function updateToggleButtons() {
     fouls: 'btn-fouls',
     table: 'btn-table',
     formations: 'btn-formations',
-    goalHistory: 'btn-goal-history',
     var: 'btn-var',
     replay: 'btn-replay',
   };
