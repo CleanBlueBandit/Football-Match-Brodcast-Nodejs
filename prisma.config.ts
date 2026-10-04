@@ -8,6 +8,6 @@ export default defineConfig({
     seed: "node prisma/seed.js",
   },
   datasource: {
-    url: process.env["DATABASE_URL"] || process.env["db_POSTGRES_URL"],
+    url: process.env.db_POSTGRES_URL
   },
 });

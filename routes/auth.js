@@ -53,7 +53,7 @@ router.post('/login', async (req, res) => {
     });
 
     if (!user) {
-      const msg = 'No account found with that username.';
+      const msg = 'Invalid credentials.';
       await logLoginEvent(username, false, msg, ip);
       return res.status(401).json({ error: msg });
     }
@@ -62,7 +62,7 @@ router.post('/login', async (req, res) => {
     const match = await bcrypt.compare(password, normalizeBcryptHash(passwordHash));
 
     if (!match) {
-      const msg = 'Invalid password.';
+      const msg = 'Invalid credentials.';
       await logLoginEvent(username, false, msg, ip);
       return res.status(401).json({ error: msg });
     }
