@@ -4,14 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Broadcast Control</title>
-<link rel="stylesheet" href="control.css">
+<link rel="stylesheet" href="/control.css">
 </head>
 <body id="control-page">
   <header>
     <h1>Broadcast Control Panel</h1>
     <div class="header-actions">
       <span id="ws-status" class="ws-status">connecting…</span>
-      <a class="btn success" href="/api/export.xlsx" download>Download Excel</a>
+      <a class="btn" id="nav-stats" href="/stats" hidden>Statistics</a>
       <button class="btn danger" onclick="logout()">Logout</button>
     </div>
   </header>
@@ -33,6 +33,10 @@
       <p id="start-error" class="form-error" hidden></p>
       <button class="btn primary" id="btn-start-match" onclick="startMatch()">Start Match</button>
     </section>
+    <section class="panel" id="scheduled-panel" style="margin-top:1rem;" hidden>
+      <h2>Scheduled Matches</h2>
+      <ul class="player-list fixture-list" id="scheduled-list" style="max-height:none;"></ul>
+    </section>
   </main>
 
   <!-- Shown only while a match is live -->
@@ -52,10 +56,6 @@
       <div class="form-row">
         <div style="text-align:center;">
           <div style="font-size:32px; font-weight:800;" id="ctrl-home-score">0</div>
-          <div class="btn-group">
-            <button class="btn" onclick="modScore('home', -1)">-1</button>
-            <button class="btn" onclick="modScore('home', 1)">+1</button>
-          </div>
         </div>
         <div style="text-align:center; min-width:120px;">
           <div style="font-size:36px; font-weight:800; font-variant-numeric:tabular-nums;" id="ctrl-timer">00:00</div>
@@ -66,10 +66,6 @@
         </div>
         <div style="text-align:center;">
           <div style="font-size:32px; font-weight:800;" id="ctrl-away-score">0</div>
-          <div class="btn-group">
-            <button class="btn" onclick="modScore('away', -1)">-1</button>
-            <button class="btn" onclick="modScore('away', 1)">+1</button>
-          </div>
         </div>
       </div>
       <div class="form-row">
@@ -77,15 +73,8 @@
           <label>Added Time</label>
           <input type="number" id="inp-added" value="0" min="0" onchange="updateStat('addedTime', this.value)">
         </div>
-        <div>
-          <label>Home Fouls</label>
-          <input type="number" id="inp-home-fouls" value="0" min="0" onchange="updateStat('homeFouls', this.value)">
-        </div>
-        <div>
-          <label>Away Fouls</label>
-          <input type="number" id="inp-away-fouls" value="0" min="0" onchange="updateStat('awayFouls', this.value)">
-        </div>
       </div>
+      <p class="hint">Score, fouls and possession are corrected by the statistician.</p>
     </section>
 
     <section class="panel">
@@ -206,13 +195,7 @@
     </section>
 
     <section class="panel">
-      <h2>Possession & Stats</h2>
-      <div class="form-row">
-        <div>
-          <label>Home %</label>
-          <input type="number" id="inp-home-poss" value="50" min="0" max="100" onchange="updatePossession()">
-        </div>
-      </div>
+      <h2>Stat Graphics</h2>
       <div class="form-row">
         <button class="btn" id="btn-possession" onclick="toggleOverlay('possession')">Toggle Possession</button>
         <button class="btn" id="btn-fouls" onclick="toggleOverlay('fouls')">Toggle Fouls</button>
@@ -272,21 +255,6 @@
       </div>
     </section>
 
-    <section class="panel stats-panel">
-      <h2>Player Stats</h2>
-      <p class="hint">Goals, assists and cards are added automatically by the Goal and Card events. A card also counts as a foul. Use +/- here to record other fouls or fix a mistake. A foul also updates the team's foul count. G = goals, A = assists, F = fouls, Y = yellow cards, R = red cards.</p>
-      <div class="stats-columns">
-        <div>
-          <h3 id="stats-home-title">Home</h3>
-          <div id="stats-home" class="stat-list"></div>
-        </div>
-        <div>
-          <h3 id="stats-away-title">Away</h3>
-          <div id="stats-away" class="stat-list"></div>
-        </div>
-      </div>
-    </section>
-
     <section class="panel">
       <h2>End Match</h2>
       <label class="check"><input type="checkbox" id="end-save" checked> Record result and player stats</label>
@@ -294,6 +262,6 @@
     </section>
   </main>
 
-<script src="script.js"></script>
+<script src="/control.js"></script>
 </body>
 </html>

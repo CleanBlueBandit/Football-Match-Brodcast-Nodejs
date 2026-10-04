@@ -6,10 +6,22 @@ datasource db {
   provider = "postgresql"
 }
 
+// admin       - everything
+// broadcaster - live broadcast control panel (graphics, clock, events)
+// statistician- stats page: live + past/future match stats, Excel export
+// viewer      - the broadcast output only
+enum Role {
+  admin
+  broadcaster
+  statistician
+  viewer
+}
+
 model User {
   id           Int      @id @default(autoincrement())
   username     String   @unique @db.VarChar(100)
   passwordHash String   @map("password_hash")
+  role         Role     @default(viewer)
   createdAt    DateTime @default(now()) @map("created_at")
 
   @@map("users")
@@ -73,6 +85,8 @@ model Team {
   ga      Int      @default(0)
   points  Int      @default(0)
   players Player[]
+  homeMatches Match[] @relation("HomeTeam")
+  awayMatches Match[] @relation("AwayTeam")
 
   @@map("teams")
 }
@@ -92,4 +106,60 @@ model Player {
 
   @@unique([teamId, number])
   @@map("players")
+}
+
+enum MatchStatus {
+  scheduled
+  live
+  finished
+}
+
+// One row per fixture. Scheduled -> live (started from the broadcaster panel)
+// -> finished. The live clock/overlays stay in app_state; the numbers below
+// are written when the match ends, and can be corrected afterwards by the
+// statistician (the league totals are adjusted by the difference).
+model Match {
+  id               Int         @id @default(autoincrement())
+  homeTeamId       String      @map("home_team_id") @db.VarChar(64)
+  awayTeamId       String      @map("away_team_id") @db.VarChar(64)
+  homeTeam         Team        @relation("HomeTeam", fields: [homeTeamId], references: [id], onDelete: Cascade)
+  awayTeam         Team        @relation("AwayTeam", fields: [awayTeamId], references: [id], onDelete: Cascade)
+  status           MatchStatus @default(scheduled)
+  scheduledAt      DateTime?   @map("scheduled_at")
+  startedAt        DateTime?   @map("started_at")
+  endedAt          DateTime?   @map("ended_at")
+  homeScore        Int         @default(0) @map("home_score")
+  awayScore        Int         @default(0) @map("away_score")
+  homeFouls        Int         @default(0) @map("home_fouls")
+  awayFouls        Int         @default(0) @map("away_fouls")
+  homePossession   Int         @default(50) @map("home_possession")
+  awayPossession   Int         @default(50) @map("away_possession")
+  // false when the match was ended with "don't record result": it keeps its
+  // stats but never touched the league table / player totals.
+  countsInLeague   Boolean     @default(true) @map("counts_in_league")
+  createdAt        DateTime    @default(now()) @map("created_at")
+  updatedAt        DateTime    @default(now()) @updatedAt @map("updated_at")
+  playerStats      MatchPlayerStat[]
+
+  @@index([status])
+  @@map("matches")
+}
+
+// A player's numbers in one match (shirt number + name are copied so the row
+// stays meaningful if the squad changes later).
+model MatchPlayerStat {
+  id          Int    @id @default(autoincrement())
+  matchId     Int    @map("match_id")
+  match       Match  @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  teamId      String @map("team_id") @db.VarChar(64)
+  number      Int
+  name        String @db.VarChar(100)
+  goals       Int    @default(0)
+  assists     Int    @default(0)
+  fouls       Int    @default(0)
+  yellowCards Int    @default(0) @map("yellow_cards")
+  redCards    Int    @default(0) @map("red_cards")
+
+  @@unique([matchId, teamId, number])
+  @@map("match_player_stats")
 }

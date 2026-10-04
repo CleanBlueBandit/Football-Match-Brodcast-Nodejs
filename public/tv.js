@@ -71,12 +71,6 @@
       minute.className = 'gh-minute';
       minute.textContent = Math.floor((Number(gEv.minute) || 0) / 60) + 1 + "'";
       li.appendChild(minute);
-      if (gEv.selfGoal) {
-        const og = document.createElement('span');
-        og.className = 'gh-sg';
-        og.textContent = '(SG)';
-        li.appendChild(og);
-      }
       list.appendChild(li);
     });
   }
@@ -180,7 +174,7 @@
 
     const g = document.getElementById('goal-overlay');
     if (state.overlays.goal.visible) {
-      document.getElementById('g-title').textContent = state.overlays.goal.selfGoal ? 'SELF GOAL!' : 'GOAL!';
+      document.getElementById('g-title').textContent = 'GOAL!';
       document.getElementById('g-team').textContent = state.overlays.goal.team;
       document.getElementById('g-scorer').textContent =
         (state.overlays.goal.number ? '#' + state.overlays.goal.number + ' ' : '') + state.overlays.goal.scorer;

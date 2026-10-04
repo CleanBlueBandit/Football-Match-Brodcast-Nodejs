@@ -1,6 +1,7 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const { prisma } = require('../db/prisma');
+const { isRole, homeFor } = require('../lib/roles');
 
 const router = express.Router();
 
@@ -48,7 +49,7 @@ router.post('/login', async (req, res) => {
   try {
     const user = await prisma.user.findUnique({
       where: { username },
-      select: { id: true, passwordHash: true },
+      select: { id: true, passwordHash: true, role: true },
     });
 
     if (!user) {
@@ -57,7 +58,7 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ error: msg });
     }
 
-    const { id, passwordHash } = user;
+    const { id, passwordHash, role } = user;
     const match = await bcrypt.compare(password, normalizeBcryptHash(passwordHash));
 
     if (!match) {
@@ -67,11 +68,12 @@ router.post('/login', async (req, res) => {
     }
 
     req.session.loggedin = true;
-    req.session.id = id;
+    req.session.userId = id;
     req.session.username = username;
+    req.session.role = role;
 
-    await logLoginEvent(username, true, `User ID: ${id}`, ip);
-    res.json({ status: 'ok', redirect: '/control' });
+    await logLoginEvent(username, true, `User ID: ${id}, role: ${role}`, ip);
+    res.json({ status: 'ok', role, redirect: homeFor(role) });
   } catch (err) {
     console.error('Login error:', err);
     res.status(500).json({ error: 'Server error.' });
@@ -86,9 +88,11 @@ router.post('/logout', (req, res) => {
 });
 
 router.get('/session', (req, res) => {
+  const loggedin = !!(req.session && req.session.loggedin && isRole(req.session.role));
   res.json({
-    loggedin: !!(req.session && req.session.loggedin),
-    username: req.session ? req.session.username || null : null,
+    loggedin,
+    username: loggedin ? req.session.username || null : null,
+    role: loggedin ? req.session.role : null,
   });
 });
 

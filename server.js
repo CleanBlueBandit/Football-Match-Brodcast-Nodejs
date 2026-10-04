@@ -9,9 +9,11 @@ const pgSessionFactory = require('connect-pg-simple');
 const { prisma, pool } = require('./db/prisma');
 const { setupWebSocket } = require('./ws');
 const { importStandings } = require('./db/importStandings');
-const requireAuth = require('./middleware/auth');
+const { requirePermission, isLoggedIn } = require('./middleware/auth');
+const { homeFor } = require('./lib/roles');
 const authRoutes = require('./routes/auth');
 const exportRoutes = require('./routes/export');
+const matchRoutes = require('./routes/matches');
 
 const PgSession = pgSessionFactory(session);
 
@@ -23,38 +25,50 @@ app.use(express.urlencoded({ extended: true }));
 
 
 
-app.use(
-  session({
-    store: new PgSession({ pool, tableName: 'session' }),
-    secret: process.env.SESSION_SECRET || 'change_me',
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      maxAge: 1000 * 60 * 60 * 8,
-    },
-  })
-);
+// Shared with the WebSocket server, which uses it to find out who is connecting.
+const sessionMiddleware = session({
+  store: new PgSession({ pool, tableName: 'session' }),
+  secret: process.env.SESSION_SECRET || 'change_me',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    httpOnly: true,
+    sameSite: 'lax', // also keeps other sites from opening an authenticated WebSocket
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: 1000 * 60 * 60 * 8,
+  },
+});
+app.use(sessionMiddleware);
 
 app.use('/api', authRoutes);
 app.use('/api', exportRoutes);
+app.use('/api', matchRoutes);
 
-
-
-
-
+// ---- Pages -----------------------------------------------------------------
+// The role-restricted pages live in views/ (not in public/) so they can only be
+// reached through these guarded routes.
+//   /control  admin, broadcaster   live broadcast control
+//   /stats    admin, statistician  statistics
+//   /tv.html  everyone, no login   the broadcast output (OBS can't log in)
 app.get('/login', (req, res) => {
-  if (req.session.loggedin) return res.redirect('/control');
+  if (isLoggedIn(req)) return res.redirect(homeFor(req.session.role));
   res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
 
-app.get('/control', requireAuth, (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'control.html'));
+app.get('/control', requirePermission('broadcast:control'), (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'control.html'));
 });
 
+app.get('/stats', requirePermission('stats:manage'), (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'stats.html'));
+});
+
+// Old bookmarks / links.
+app.get('/control.html', (req, res) => res.redirect('/control'));
+app.get('/stats.html', (req, res) => res.redirect('/stats'));
+
 app.get('/', (req, res) => {
-  res.redirect(req.session.loggedin ? '/control.html' : '/login');
+  res.redirect(isLoggedIn(req) ? homeFor(req.session.role) : '/login');
 });
 
 app.get('/src/background.jpg', (req, res) => {
@@ -74,7 +88,7 @@ async function start() {
     console.error('Standings import failed (continuing without it):', err);
   }
 
-  setupWebSocket(server);
+  setupWebSocket(server, sessionMiddleware);
   server.listen(PORT, () => {
     console.log(`Broadcast control server listening on port ${PORT}`);
   });

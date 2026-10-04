@@ -1,0 +1,47 @@
+/* Statistics page (builds on control.css). */
+.match-grid { display: grid; grid-template-columns: 1fr minmax(160px, 220px) 1fr; gap: 1.25rem; align-items: start; margin-bottom: 1.5rem; }
+.match-grid > div { text-align: center; }
+.team-title { font-weight: 700; margin-bottom: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.big-score { font-size: 40px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.live-clock { font-size: 32px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.match-grid label { margin-top: 10px; }
+.match-grid input { text-align: center; }
+.sub-h { margin-top: 1.5rem !important; }
+
+.toolbar { display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: flex-end; margin-bottom: 1rem; }
+.toolbar > div { min-width: 140px; }
+.toolbar .grow { flex: 1; min-width: 0; }
+input[type="datetime-local"] {
+  width: 100%; background: var(--surface2); border: 1px solid var(--border2); border-radius: var(--radius);
+  padding: 8px 10px; color: var(--text); font-family: var(--font-main); font-size: 14px; color-scheme: dark;
+}
+
+.match-list { display: flex; flex-direction: column; }
+.match-row {
+  display: grid; grid-template-columns: 96px 1fr auto auto; gap: 12px; align-items: center;
+  padding: 10px 6px; border-bottom: 1px solid var(--border); font-size: 14px;
+}
+.match-row .teams { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.match-row .when { color: var(--muted); font-size: 12px; display: block; }
+.match-row .score { font-weight: 800; font-variant-numeric: tabular-nums; min-width: 56px; text-align: center; }
+.match-row .actions { display: flex; gap: 6px; }
+.match-row.open { background: rgba(255, 204, 0, 0.06); }
+.badge {
+  display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.5px; border: 1px solid var(--border2); color: var(--muted); text-align: center;
+}
+.badge.live { color: var(--danger); border-color: var(--danger); }
+.badge.scheduled { color: var(--accent); border-color: var(--accent); }
+.badge.finished { color: var(--success); border-color: var(--success); }
+.badge.note { text-transform: none; font-weight: 400; letter-spacing: 0; margin-left: 6px; }
+
+.editor-team-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 0.75rem; margin-bottom: 1rem; }
+.static-value { padding: 8px 10px; font-size: 14px; font-weight: 700; }
+.editor-actions { display: flex; gap: 10px; align-items: center; margin-top: 1rem; }
+
+@media (max-width: 640px) {
+  .match-grid { grid-template-columns: 1fr; }
+  .match-row { grid-template-columns: 1fr auto; }
+}
+
+.form-ok { color: var(--success); font-size: 13px; margin: 0 0 1rem; }

@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Statistics</title>
+<link rel="stylesheet" href="/control.css">
+<link rel="stylesheet" href="/stats.css">
+</head>
+<body id="stats-page">
+  <header>
+    <h1>Statistics</h1>
+    <div class="header-actions">
+      <span id="ws-status" class="ws-status">connecting…</span>
+      <a class="btn" id="nav-control" href="/control" hidden>Broadcast</a>
+      <a class="btn success" href="/api/export.xlsx" download>Download Excel</a>
+      <button class="btn danger" onclick="logout()">Logout</button>
+    </div>
+  </header>
+
+  <main class="dashboard">
+
+    <!-- ===== Live match ===== -->
+    <section class="panel stats-panel" id="live-panel">
+      <h2>Live Match</h2>
+      <p id="live-empty" class="hint">No match is live. Pick a scheduled or finished match below to view or correct its stats.</p>
+
+      <div id="live-body" hidden>
+        <div class="match-grid">
+          <div class="team-col">
+            <div class="team-title" id="live-home-name">Home</div>
+            <div class="big-score" id="live-home-score">0</div>
+            <div class="btn-group">
+              <button class="btn" onclick="modScore('home', -1)">-1</button>
+              <button class="btn" onclick="modScore('home', 1)">+1</button>
+            </div>
+            <label for="live-home-fouls">Fouls</label>
+            <input type="number" id="live-home-fouls" min="0" value="0" onchange="setTeamStat('homeFouls', this.value)">
+          </div>
+
+          <div class="mid-col">
+            <div class="live-clock" id="live-clock">00:00</div>
+            <div class="hint" id="live-clock-state"></div>
+            <label for="live-home-poss">Home possession %</label>
+            <input type="number" id="live-home-poss" min="0" max="100" value="50" onchange="updatePossession(this.value)">
+            <div class="hint">Away: <strong id="live-away-poss">50</strong>%</div>
+          </div>
+
+          <div class="team-col">
+            <div class="team-title" id="live-away-name">Away</div>
+            <div class="big-score" id="live-away-score">0</div>
+            <div class="btn-group">
+              <button class="btn" onclick="modScore('away', -1)">-1</button>
+              <button class="btn" onclick="modScore('away', 1)">+1</button>
+            </div>
+            <label for="live-away-fouls">Fouls</label>
+            <input type="number" id="live-away-fouls" min="0" value="0" onchange="setTeamStat('awayFouls', this.value)">
+          </div>
+        </div>
+
+        <h2 class="sub-h">Player Stats</h2>
+        <p class="hint">Goals, assists and cards are added automatically by the broadcaster's Goal and Card events. A card also counts as a foul. Use +/- here to record other fouls or fix a mistake. A foul also updates the team's foul count. G = goals, A = assists, F = fouls, Y = yellow cards, R = red cards.</p>
+        <div class="stats-columns">
+          <div>
+            <h3 id="live-stats-home-title">Home</h3>
+            <div id="live-stats-home" class="stat-list"></div>
+          </div>
+          <div>
+            <h3 id="live-stats-away-title">Away</h3>
+            <div id="live-stats-away" class="stat-list"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== Matches list ===== -->
+    <section class="panel stats-panel" id="matches-panel">
+      <h2>Matches</h2>
+      <div class="toolbar">
+        <div>
+          <label for="filter">Show</label>
+          <select id="filter" onchange="renderMatchList()">
+            <option value="all">All</option>
+            <option value="scheduled">Upcoming</option>
+            <option value="live">Live</option>
+            <option value="finished">Finished</option>
+          </select>
+        </div>
+        <div class="grow"></div>
+        <div>
+          <label for="new-home">Home</label>
+          <select id="new-home"></select>
+        </div>
+        <div>
+          <label for="new-away">Away</label>
+          <select id="new-away"></select>
+        </div>
+        <div>
+          <label for="new-when">Date &amp; time (optional)</label>
+          <input type="datetime-local" id="new-when">
+        </div>
+        <div>
+          <label>&nbsp;</label>
+          <button class="btn primary" onclick="scheduleMatch()">Schedule match</button>
+        </div>
+      </div>
+      <p id="matches-msg" class="form-error" hidden></p>
+      <div id="match-list" class="match-list"></div>
+    </section>
+
+    <!-- ===== Match editor (scheduled / finished) ===== -->
+    <section class="panel stats-panel" id="editor-panel" hidden>
+      <h2 id="editor-title">Match</h2>
+      <p class="hint" id="editor-hint"></p>
+
+      <div class="editor-team-stats" id="ed-when-row" hidden>
+        <div><label for="ed-when">Scheduled for</label><input type="datetime-local" id="ed-when" oninput="markDirty()"></div>
+      </div>
+
+      <div class="editor-team-stats">
+        <div><label for="ed-home-score">Home score</label><input type="number" id="ed-home-score" min="0" value="0" oninput="markDirty()"></div>
+        <div><label for="ed-away-score">Away score</label><input type="number" id="ed-away-score" min="0" value="0" oninput="markDirty()"></div>
+        <div><label for="ed-home-fouls">Home fouls</label><input type="number" id="ed-home-fouls" min="0" value="0" oninput="markDirty()"></div>
+        <div><label for="ed-away-fouls">Away fouls</label><input type="number" id="ed-away-fouls" min="0" value="0" oninput="markDirty()"></div>
+        <div><label for="ed-home-poss">Home possession %</label><input type="number" id="ed-home-poss" min="0" max="100" value="50" oninput="markDirty(); syncEdPoss()"></div>
+        <div><label>Away possession %</label><div class="static-value" id="ed-away-poss">50</div></div>
+      </div>
+      <label class="check" id="ed-league-row" hidden><input type="checkbox" id="ed-counts" onchange="markDirty()"> Counts towards the league table and player totals</label>
+
+      <div class="stats-columns">
+        <div>
+          <h3 id="ed-stats-home-title">Home</h3>
+          <div id="ed-stats-home" class="stat-list"></div>
+        </div>
+        <div>
+          <h3 id="ed-stats-away-title">Away</h3>
+          <div id="ed-stats-away" class="stat-list"></div>
+        </div>
+      </div>
+
+      <p id="editor-msg" class="form-error" hidden></p>
+      <div class="editor-actions">
+        <button class="btn primary" id="ed-save" onclick="saveEditor()">Save changes</button>
+        <button class="btn" onclick="closeEditor()">Close</button>
+        <span id="ed-dirty" class="hint" hidden>Unsaved changes</span>
+      </div>
+    </section>
+
+  </main>
+
+<script src="/stats.js"></script>
+</body>
+</html>

@@ -1,5 +1,8 @@
 const { WebSocketServer, WebSocket } = require('ws');
 const { prisma } = require('../db/prisma');
+const { canRunCommand, isRole } = require('../lib/roles');
+const { STAT_FIELDS, zeroStats } = require('../lib/leagueTotals');
+const { finishLiveMatch } = require('../lib/matches');
 
 // This mirrors the state shape from the original tv.js's getDefaultState(),
 // since that is the authoritative schema the real broadcast display expects.
@@ -45,7 +48,7 @@ function getDefaultState() {
     // 'idle' = no match running (control shows the start menu, TV shows the
     // "match will begin soon" card). 'live' = a match is in progress.
     status: 'idle',
-    currentMatch: null, // { homeId, awayId } while live
+    currentMatch: null, // { homeId, awayId, matchId } while live (matchId = row in `matches`)
   };
 }
 
@@ -100,16 +103,6 @@ function mergeDefaults(saved = {}) {
 // the standings so publicState() (called on every clock tick) never hits the
 // database; it is refreshed whenever the standings could have changed.
 // ---------------------------------------------------------------------------
-const STAT_FIELDS = ['goals', 'assists', 'fouls', 'yellow_cards', 'red_cards'];
-// match-state stat name -> Prisma Player column
-const STAT_COLUMNS = {
-  goals: 'goals',
-  assists: 'assists',
-  fouls: 'fouls',
-  yellow_cards: 'yellowCards',
-  red_cards: 'redCards',
-};
-const zeroStats = () => Object.fromEntries(STAT_FIELDS.map((f) => [f, 0]));
 let leagueTeams = [];
 
 async function loadLeague() {
@@ -157,33 +150,6 @@ function changePlayerFouls(side, entry, delta) {
   }
 }
 
-// Builds the DB operations that add this match's player stats onto each
-// player's running totals. Players that don't exist yet (e.g. added from the
-// control panel during the match) are created.
-function playerStatOps(side, teamId) {
-  const ops = [];
-  for (const st of Object.values(state.playerStats?.[side] || {})) {
-    if (!STAT_FIELDS.some((f) => st[f])) continue;
-    const number = Number(st.number);
-    if (!Number.isInteger(number)) continue; // shirt numbers are integers in the DB
-
-    const increments = {};
-    const initial = {};
-    for (const f of STAT_FIELDS) {
-      increments[STAT_COLUMNS[f]] = { increment: st[f] || 0 };
-      initial[STAT_COLUMNS[f]] = st[f] || 0;
-    }
-    ops.push(
-      prisma.player.upsert({
-        where: { teamId_number: { teamId, number } },
-        update: increments,
-        create: { teamId, number, name: st.name || `Player ${number}`, ...initial },
-      })
-    );
-  }
-  return ops;
-}
-
 // Shape matches what tv.js's table overlay reads (pos / team / p / pts);
 // the extra fields are there for any future layout.
 function buildTable() {
@@ -215,34 +181,6 @@ function publicState() {
   };
 }
 
-// Adds the finished match to both teams' standings and player totals, in one
-// transaction so a failure can't leave half a result saved.
-async function recordResult() {
-  const homeId = state.currentMatch?.homeId;
-  const awayId = state.currentMatch?.awayId;
-  if (!homeId || !awayId) return;
-
-  const hs = state.match.homeScore;
-  const as = state.match.awayScore;
-  const standing = (gf, ga) => ({
-    played: { increment: 1 },
-    gf: { increment: gf },
-    ga: { increment: ga },
-    won: { increment: gf > ga ? 1 : 0 },
-    drawn: { increment: gf === ga ? 1 : 0 },
-    lost: { increment: gf < ga ? 1 : 0 },
-    points: { increment: gf > ga ? 3 : gf === ga ? 1 : 0 },
-  });
-
-  await prisma.$transaction([
-    prisma.team.update({ where: { id: homeId }, data: standing(hs, as) }),
-    prisma.team.update({ where: { id: awayId }, data: standing(as, hs) }),
-    ...playerStatOps('home', homeId),
-    ...playerStatOps('away', awayId),
-  ]);
-  await loadLeague();
-}
-
 function clearAutoHideTimers() {
   Object.values(autoHideTimers).forEach(clearTimeout);
 }
@@ -272,11 +210,27 @@ async function refillEmptySquads() {
   }
 }
 
+// Every live match has a row in `matches`. A match that was already live when
+// the server was upgraded (or whose row was deleted by hand) gets one here, so
+// ending it still has somewhere to save its numbers.
+async function ensureLiveMatchRow() {
+  if (state.status !== 'live' || !state.currentMatch) return;
+  const { homeId, awayId, matchId } = state.currentMatch;
+  if (matchId && (await prisma.match.findUnique({ where: { id: matchId }, select: { id: true } }))) return;
+  const created = await prisma.match.create({
+    data: { homeTeamId: homeId, awayTeamId: awayId, status: 'live', startedAt: new Date() },
+  });
+  state.currentMatch = { homeId, awayId, matchId: created.id };
+  console.log(`Created match row #${created.id} for the match that was already live.`);
+  scheduleSave();
+}
+
 async function loadState() {
   await loadLeague();
   const row = await prisma.appState.findUnique({ where: { id: 1 } });
   if (row) {
     state = mergeDefaults(row.data);
+    await ensureLiveMatchRow();
     await refillEmptySquads();
   } else {
     state = getDefaultState();
@@ -334,16 +288,35 @@ async function applyCommand(cmd) {
   switch (cmd.action) {
     case 'startMatch': {
       if (state.status === 'live') return false; // never overwrite a running match
-      if (!cmd.homeId || !cmd.awayId || cmd.homeId === cmd.awayId) return false;
+      // Either start a scheduled fixture ({ matchId }) or an ad-hoc one ({ homeId, awayId }).
+      let scheduled = null;
+      let homeId = cmd.homeId;
+      let awayId = cmd.awayId;
+      if (cmd.matchId !== undefined && cmd.matchId !== null && cmd.matchId !== '') {
+        const id = Number(cmd.matchId);
+        if (!Number.isInteger(id)) return false;
+        scheduled = await prisma.match.findUnique({ where: { id }, include: { playerStats: true } });
+        if (!scheduled || scheduled.status !== 'scheduled') return false;
+        homeId = scheduled.homeTeamId;
+        awayId = scheduled.awayTeamId;
+      }
+      if (!homeId || !awayId || homeId === awayId) return false;
       await loadLeague();
-      const home = leagueTeams.find((t) => t.id === cmd.homeId);
-      const away = leagueTeams.find((t) => t.id === cmd.awayId);
+      const home = leagueTeams.find((t) => t.id === homeId);
+      const away = leagueTeams.find((t) => t.id === awayId);
       if (!home || !away) return false;
       const [homeSquad, awaySquad] = await Promise.all([loadSquad(home.id), loadSquad(away.id)]);
       if (state.status === 'live') return false; // another start won the race while we awaited
       console.log(
         `Match started: ${home.name} (${homeSquad.length} players loaded) vs ${away.name} (${awaySquad.length} players loaded)`
       );
+
+      const startedAt = new Date();
+      const row = scheduled
+        ? await prisma.match.update({ where: { id: scheduled.id }, data: { status: 'live', startedAt } })
+        : await prisma.match.create({
+            data: { homeTeamId: home.id, awayTeamId: away.id, status: 'live', startedAt },
+          });
 
       clearAutoHideTimers();
       const fresh = getDefaultState();
@@ -352,21 +325,42 @@ async function applyCommand(cmd) {
       fresh.players.home = homeSquad;
       fresh.players.away = awaySquad;
       fresh.status = 'live';
-      fresh.currentMatch = { homeId: home.id, awayId: away.id };
+      fresh.currentMatch = { homeId: home.id, awayId: away.id, matchId: row.id };
       state = fresh;
       ['home', 'away'].forEach((side) => state.players[side].forEach((p) => statEntry(side, p.number, p.name)));
+
+      // A fixture the statistician already entered numbers for starts with them.
+      if (scheduled) {
+        const m = state.match;
+        m.homeScore = scheduled.homeScore;
+        m.awayScore = scheduled.awayScore;
+        m.homeFouls = scheduled.homeFouls;
+        m.awayFouls = scheduled.awayFouls;
+        m.homePossession = scheduled.homePossession;
+        m.awayPossession = scheduled.awayPossession;
+        for (const ps of scheduled.playerStats) {
+          const side = ps.teamId === home.id ? 'home' : 'away';
+          const entry = statEntry(side, ps.number, ps.name);
+          entry.goals = ps.goals;
+          entry.assists = ps.assists;
+          entry.fouls = ps.fouls;
+          entry.yellow_cards = ps.yellowCards;
+          entry.red_cards = ps.redCards;
+        }
+      }
       break;
     }
 
     case 'endMatch': {
-      if (cmd.saveResult !== false) {
-        try {
-          await recordResult();
-        } catch (err) {
-          // Keep the match running so the operator can retry instead of losing the result.
-          console.error('Could not save match result:', err.message);
-          return false;
-        }
+      try {
+        // Always saved to the match's row; saveResult decides whether it also
+        // counts towards the league table and player totals.
+        await finishLiveMatch(prisma, state.currentMatch.matchId, state, cmd.saveResult !== false);
+        await loadLeague();
+      } catch (err) {
+        // Keep the match running so the operator can retry instead of losing the result.
+        console.error('Could not save match result:', err.message);
+        return false;
       }
       clearAutoHideTimers();
       state = getDefaultState(); // idle, clock stopped, overlays/goals/scores cleared
@@ -388,16 +382,23 @@ async function applyCommand(cmd) {
       break;
     }
 
+    // Broadcast settings (broadcaster). Team fouls are statistics, see setTeamStat.
     case 'updateStat': {
-      const numericFields = ['addedTime', 'homeFouls', 'awayFouls'];
       const stringFields = ['homeFormation', 'awayFormation'];
-      if (numericFields.includes(cmd.field)) {
-        state.match[cmd.field] = parseInt(cmd.value, 10) || 0;
+      if (cmd.field === 'addedTime') {
+        state.match.addedTime = Math.max(0, parseInt(cmd.value, 10) || 0);
       } else if (stringFields.includes(cmd.field)) {
         state.match[cmd.field] = cmd.value;
       } else {
         return false;
       }
+      break;
+    }
+
+    // Team-level match statistics (statistician).
+    case 'setTeamStat': {
+      if (cmd.field !== 'homeFouls' && cmd.field !== 'awayFouls') return false;
+      state.match[cmd.field] = Math.max(0, parseInt(cmd.value, 10) || 0);
       break;
     }
 
@@ -408,8 +409,11 @@ async function applyCommand(cmd) {
       break;
 
     case 'updatePossession':
-      state.match.homePossession = parseInt(cmd.home, 10) || 0;
-      state.match.awayPossession = parseInt(cmd.away, 10) || 0;
+      {
+        const home = Math.min(100, Math.max(0, parseInt(cmd.home, 10) || 0));
+        state.match.homePossession = home;
+        state.match.awayPossession = 100 - home;
+      }
       break;
 
     case 'addPlayer':
@@ -557,7 +561,20 @@ async function applyCommand(cmd) {
 // which talk to the database) can't interleave with each other.
 let commandQueue = Promise.resolve();
 
-function setupWebSocket(server) {
+// Resolves the role of whoever opened this socket by running the same session
+// middleware Express uses on the upgrade request's cookie. No session = null:
+// the read-only broadcast output (tv.html / OBS), which can watch but not command.
+function roleOf(req, sessionMiddleware) {
+  return new Promise((resolve) => {
+    if (!sessionMiddleware) return resolve(null);
+    sessionMiddleware(req, {}, () => {
+      const sess = req.session;
+      resolve(sess && sess.loggedin === true && isRole(sess.role) ? sess.role : null);
+    });
+  });
+}
+
+function setupWebSocket(server, sessionMiddleware) {
   wss = new WebSocketServer({ server, path: '/ws' });
 
   loadState()
@@ -572,8 +589,10 @@ function setupWebSocket(server) {
     })
     .catch((err) => console.error('Failed to load initial state:', err.message));
 
-  wss.on('connection', (ws) => {
-    ws.on('message', (raw) => {
+  wss.on('connection', (ws, req) => {
+    const rolePromise = roleOf(req, sessionMiddleware);
+
+    ws.on('message', async (raw) => {
       let msg;
       try {
         msg = JSON.parse(raw.toString());
@@ -581,6 +600,15 @@ function setupWebSocket(server) {
         return;
       }
       if (!msg || msg.type !== 'command') return;
+
+      // The server decides, not the page: hiding a button in the UI is not access control.
+      const role = await rolePromise;
+      if (!canRunCommand(role, msg.action)) {
+        if (ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({ type: 'rejected', action: msg.action, reason: role ? 'forbidden' : 'unauthenticated' }));
+        }
+        return;
+      }
 
       commandQueue = commandQueue
         .then(async () => {

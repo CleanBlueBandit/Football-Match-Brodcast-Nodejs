@@ -1,13 +1,14 @@
 const express = require('express');
 const { prisma } = require('../db/prisma');
-const requireAuth = require('../middleware/auth');
+const { requirePermission } = require('../middleware/auth');
 const { getMatchState } = require('../ws');
 const { buildReport } = require('../lib/exportReport');
 
 const router = express.Router();
 
-// GET /api/export.xlsx - downloads the current teams + players (+ live match) as Excel.
-router.get('/export.xlsx', requireAuth, async (req, res) => {
+// GET /api/export.xlsx - downloads teams, players, matches (+ the live match) as Excel.
+// Statisticians (and admins) only.
+router.get('/export.xlsx', requirePermission('stats:manage'), async (req, res) => {
   try {
     const buffer = await buildReport({ prisma, matchState: getMatchState() });
     const stamp = new Date().toISOString().slice(0, 16).replace('T', '_').replace(':', '-');
