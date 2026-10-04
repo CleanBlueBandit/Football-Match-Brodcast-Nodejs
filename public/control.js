@@ -163,6 +163,13 @@ window.resetTimer = function () {
  * updateStat({ playerId, stat, amount })
  */
 window.updateStat = function (playerId, stat, amount = 1) {
+  // Match settings from the Match Control / Team Setup panels:
+  // updateStat('addedTime' | 'homeFormation' | 'awayFormation', value)
+  if (['addedTime', 'homeFormation', 'awayFormation'].includes(playerId)) {
+    send('match-setting', { setting: playerId, value: playerId === 'addedTime' ? Number(stat) || 0 : stat });
+    return;
+  }
+
   if (
     playerId &&
     typeof playerId === 'object'
@@ -372,10 +379,15 @@ window.triggerGoal = function () {
     return;
   }
 
-  const side =
+  // The select is the scorer's team. An own goal counts for the other side.
+  const scorerSide =
     String(team) === String(state.match.awayTeam)
       ? 'away'
       : 'home';
+
+  const side = selfGoal
+    ? (scorerSide === 'home' ? 'away' : 'home')
+    : scorerSide;
 
   const scorer =
     state.players.find(
@@ -393,6 +405,26 @@ window.triggerGoal = function () {
     side,
     playerId: selfGoal ? null : scorer.id,
     playerName: scorer.name,
+  });
+
+  const assistPlayer =
+    !selfGoal && assistId
+      ? state.players.find((player) => String(player.id) === String(assistId))
+      : null;
+
+  // The goal lower-third on the TV.
+  send('graphic', {
+    type: 'goal',
+    data: {
+      title: selfGoal ? 'OWN GOAL' : 'GOAL!',
+      team: getTeamName(
+        side === 'home' ? state.match.homeTeam : state.match.awayTeam
+      ),
+      scorer: scorer.name,
+      number: scorer.number ?? '',
+      assist: assistPlayer ? assistPlayer.name : '',
+      assistNumber: assistPlayer ? assistPlayer.number ?? '' : '',
+    },
   });
 
   // An assist is a separate server command.
@@ -448,22 +480,68 @@ window.triggerCard = function () {
     stat,
     amount: 1,
   });
+
+  const player = state.players.find(
+    (entry) => String(entry.id) === String(playerId)
+  );
+
+  send('graphic', {
+    type: 'card',
+    data: {
+      team: getTeamName(player?.teamId),
+      player: player?.name || '',
+      number: player?.number ?? '',
+      type: cardType === 'red' || stat === 'redCards' ? 'red' : 'yellow',
+    },
+  });
 };
 
 // ---- Substitutions ----
-//
-// The current server does not expose a substitution command.
-// Keep the function so existing HTML onclick handlers don't throw.
 
 window.triggerSub = function () {
-  console.warn(
-    'Substitutions are not supported by the current WebSocket server.'
-  );
+  const teamId = document.getElementById('sub-team')?.value;
+  const outId = document.getElementById('sub-out')?.value;
+  const inId = document.getElementById('sub-in')?.value;
+
+  if (!teamId || !outId || !inId) {
+    alert('Select a team, the player going out and the player coming in.');
+    return;
+  }
+
+  if (String(outId) === String(inId)) {
+    alert('Pick two different players.');
+    return;
+  }
+
+  const findPlayer = (id) =>
+    state.players.find((player) => String(player.id) === String(id));
+
+  const out = findPlayer(outId);
+  const inn = findPlayer(inId);
+
+  if (!out || !inn) return;
+
+  send('graphic', {
+    type: 'sub',
+    data: {
+      team: getTeamName(teamId),
+      out: out.name,
+      outNumber: out.number ?? '',
+      in: inn.name,
+      inNumber: inn.number ?? '',
+    },
+  });
 };
 
 // ---- Overlay ----
 
 window.hideOverlay = function (name) {
+  // goal / card / sub are event graphics, not toggle overlays.
+  if (['goal', 'card', 'sub'].includes(name)) {
+    send('graphic', { visible: false });
+    return;
+  }
+
   send('overlay', {
     visible: false,
     type: name || null,
@@ -472,46 +550,60 @@ window.hideOverlay = function (name) {
 };
 
 window.toggleOverlay = function (name) {
-  const currentlyVisible =
-    !!state?.overlay?.visible;
+  // The VAR banner has its own state: clear it, or point at the VAR panel.
+  if (name === 'var') {
+    if (state?.var?.visible) {
+      send('var-clear');
+    } else {
+      alert('Use "Trigger Check" in Match Officials & VAR to show the VAR banner.');
+    }
+    return;
+  }
+
+  // Clicking the active graphic hides it; clicking another one switches to it.
+  const showing =
+    !!state?.overlay?.visible &&
+    state.overlay.type === name;
 
   send('overlay', {
-    visible: !currentlyVisible,
-    type: name || state?.overlay?.type || null,
-    data: state?.overlay?.data || null,
-  });
-};
-
-// ---- VAR / referee calls ----
-//
-// These commands don't exist in the current ws.js.
-// Keep the functions so the existing HTML remains functional,
-// but don't pretend they are being sent to the server.
-
-window.triggerVarCheck = function () {
-  console.warn(
-    'VAR commands are not supported by the current WebSocket server.'
-  );
-};
-
-window.showVarVerdict = function () {
-  console.warn(
-    'VAR commands are not supported by the current WebSocket server.'
-  );
-};
-
-window.clearVarGraphic = function () {
-  send('overlay', {
-    visible: false,
-    type: 'var',
+    visible: !showing,
+    type: name,
     data: null,
   });
 };
 
-window.quickRefCall = function () {
-  console.warn(
-    'Referee call commands are not supported by the current WebSocket server.'
-  );
+// ---- VAR / referee calls ----
+
+window.triggerVarCheck = function () {
+  const checkType =
+    document.getElementById('var-check-type')?.value;
+
+  if (!checkType) return;
+
+  send('var-check', { checkType });
+};
+
+window.showVarVerdict = function () {
+  const verdict =
+    document.getElementById('var-verdict')?.value;
+
+  if (!verdict) return;
+
+  send('var-verdict', {
+    verdict,
+    checkType:
+      state?.var?.checkType ||
+      document.getElementById('var-check-type')?.value ||
+      '',
+  });
+};
+
+window.clearVarGraphic = function () {
+  send('var-clear');
+};
+
+window.quickRefCall = function (call) {
+  send('ref-call', { call });
 };
 
 // ---- Start / end match ----
@@ -951,11 +1043,10 @@ function updateToggleButtons() {
       if (!btn) return;
 
       const active =
-        !!state?.overlay?.visible &&
-        (
-          !state.overlay.type ||
-          state.overlay.type === key
-        );
+        key === 'var'
+          ? !!state?.var?.visible
+          : !!state?.overlay?.visible &&
+            state.overlay.type === key;
 
       btn.classList.toggle(
         'active',

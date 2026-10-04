@@ -7,6 +7,8 @@ let state = null;
 let wss = null;
 let timerInterval = null;
 let heartbeatInterval = null;
+let graphicTimer = null;
+let refCallTimer = null;
 let overlayTimer = null; // kept out of `state`: a Timeout object can't be JSON-serialised
 let finishing = false;
 
@@ -31,14 +33,64 @@ const DEFAULT_STATE = {
         running: false,
         startedAt: null,
         matchId: null, // id of the live row in the `matches` table
+        addedTime: 0,
+        homeFormation: '4-3-3',
+        awayFormation: '4-4-2',
     },
     goalHistory: [],
+    // Toggle graphics (possession, fouls, table, formations, replay): one at a time.
     overlay: {
         visible: false,
         type: null,
         data: null,
     },
+    // Event popups (goal / card / sub). Separate from `overlay` so a goal
+    // graphic doesn't knock a toggled possession bar off screen. Auto-hides.
+    graphic: {
+        visible: false,
+        type: null,
+        data: null,
+    },
+    // VAR banner: phase is 'checking' or 'verdict'.
+    var: {
+        visible: false,
+        phase: '',
+        checkType: '',
+        verdict: '',
+    },
+    // Quick referee call: 'offside' | 'handball' | 'penalty' | null. Auto-hides.
+    refCall: null,
 };
+
+const GRAPHIC_TYPES = ['goal', 'card', 'sub'];
+const REF_CALLS = ['offside', 'handball', 'penalty'];
+const FORMATION_NAMES = ['4-3-3', '4-4-2', '3-5-2', '5-4-1'];
+const GRAPHIC_MS = 8000;
+const REF_CALL_MS = 6000;
+const MAX_GRAPHIC_MS = 60000;
+
+// Event-graphic payloads are shown as text on the TV; keep them small plain values.
+function cleanData(data) {
+    if (!data || typeof data !== 'object') return null;
+    const out = {};
+    for (const [key, value] of Object.entries(data).slice(0, 20)) {
+        if (typeof value === 'string') out[key] = value.slice(0, 100);
+        else if (typeof value === 'number' || typeof value === 'boolean') out[key] = value;
+    }
+    return out;
+}
+
+// Back to the "no match" state: teams unset, score zero, nothing on screen.
+function clearMatchState() {
+    clearAutoHideTimers();
+    state.match = { ...DEFAULT_STATE.match };
+    state.goalHistory = [];
+    state.overlay = { ...DEFAULT_STATE.overlay };
+    state.graphic = { ...DEFAULT_STATE.graphic };
+    state.var = { ...DEFAULT_STATE.var };
+    state.refCall = null;
+    resetPlayerStats();
+}
 
 function mergeDefaults(value, defaults) {
     if (!value || typeof value !== 'object') return defaults;
@@ -175,10 +227,13 @@ function broadcast() {
 }
 
 function clearAutoHideTimers() {
-    if (overlayTimer) {
-        clearTimeout(overlayTimer);
-        overlayTimer = null;
+    for (const name of ['overlayTimer', 'graphicTimer', 'refCallTimer']) {
+        const timer = { overlayTimer, graphicTimer, refCallTimer }[name];
+        if (timer) clearTimeout(timer);
     }
+    overlayTimer = null;
+    graphicTimer = null;
+    refCallTimer = null;
 }
 
 function startWebSocketHeartbeat() {
@@ -334,6 +389,8 @@ async function handleCommand(command, role, ws) {
                 });
             }
 
+            clearMatchState();
+
             state.match = {
                 ...state.match,
                 // A fixture decides its own teams.
@@ -348,9 +405,7 @@ async function handleCommand(command, role, ws) {
                 startedAt: null,
                 matchId: row.id,
             };
-            state.goalHistory = [];
 
-            resetPlayerStats();
             broadcast();
             break;
         }
@@ -444,7 +499,8 @@ async function handleCommand(command, role, ws) {
         }
 
         case 'overlay': {
-            clearAutoHideTimers();
+            if (overlayTimer) clearTimeout(overlayTimer);
+            overlayTimer = null;
 
             state.overlay = {
                 visible: command.visible !== false,
@@ -458,6 +514,89 @@ async function handleCommand(command, role, ws) {
                     state.overlay.visible = false;
                     broadcast();
                 }, command.duration);
+            }
+
+            broadcast();
+            break;
+        }
+
+        case 'graphic': {
+            if (graphicTimer) clearTimeout(graphicTimer);
+            graphicTimer = null;
+
+            const visible = command.visible !== false && GRAPHIC_TYPES.includes(command.type);
+
+            state.graphic = visible
+                ? { visible: true, type: command.type, data: cleanData(command.data) }
+                : { ...DEFAULT_STATE.graphic };
+
+            if (visible) {
+                const ms = Math.min(Number(command.duration) || GRAPHIC_MS, MAX_GRAPHIC_MS);
+                graphicTimer = setTimeout(() => {
+                    graphicTimer = null;
+                    state.graphic = { ...DEFAULT_STATE.graphic };
+                    broadcast();
+                }, ms);
+            }
+
+            broadcast();
+            break;
+        }
+
+        case 'var-check': {
+            const checkType = String(command.checkType || '').slice(0, 40);
+            if (!checkType) return;
+            state.var = { visible: true, phase: 'checking', checkType, verdict: '' };
+            broadcast();
+            break;
+        }
+
+        case 'var-verdict': {
+            const verdict = String(command.verdict || '').slice(0, 40);
+            if (!verdict) return;
+            const checkType = String(command.checkType || state.var.checkType || '').slice(0, 40);
+            state.var = { visible: true, phase: 'verdict', checkType, verdict };
+            broadcast();
+            break;
+        }
+
+        case 'var-clear': {
+            state.var = { ...DEFAULT_STATE.var };
+            broadcast();
+            break;
+        }
+
+        case 'ref-call': {
+            if (refCallTimer) clearTimeout(refCallTimer);
+            refCallTimer = null;
+
+            // Accept 'penaltyCall' too (older name for the same graphic).
+            const call = command.call === 'penaltyCall' ? 'penalty' : command.call;
+            state.refCall = command.visible !== false && REF_CALLS.includes(call) ? call : null;
+
+            if (state.refCall) {
+                refCallTimer = setTimeout(() => {
+                    refCallTimer = null;
+                    state.refCall = null;
+                    broadcast();
+                }, REF_CALL_MS);
+            }
+
+            broadcast();
+            break;
+        }
+
+        case 'match-setting': {
+            const { setting, value } = command;
+
+            if (setting === 'addedTime') {
+                const n = Math.floor(Number(value));
+                state.match.addedTime = Number.isFinite(n) ? Math.min(Math.max(n, 0), 30) : 0;
+            } else if (setting === 'homeFormation' || setting === 'awayFormation') {
+                if (!FORMATION_NAMES.includes(value)) return;
+                state.match[setting] = value;
+            } else {
+                return;
             }
 
             broadcast();
@@ -487,10 +626,10 @@ async function handleCommand(command, role, ws) {
                 finishing = false;
             }
 
-            // Stop the clock, keep the final score on screen, pick up the new table.
-            state.match.running = false;
-            state.match.startedAt = null;
-            state.match.matchId = null;
+            // The result is saved: go back to "no match" (control panel shows the
+            // start menu again, the TV shows "The match will begin soon") and
+            // pick up the new table.
+            clearMatchState();
 
             await refreshStandings().catch((error) =>
                 console.error('Failed to refresh standings:', error)

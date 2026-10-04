@@ -45,7 +45,8 @@
     const teams = s.teams || [];
     const players = s.players || [];
     const nameOf = (id) => (teams.find((t) => t.id === id) || {}).name || id || '';
-    const side = (id) => players.filter((p) => p.teamId === id);
+    const side = (id) =>
+      players.filter((p) => p.teamId === id).sort((a, b) => a.number - b.number);
     const sum = (list, key) => list.reduce((n, p) => n + (p[key] || 0), 0);
 
     // A match is on screen once two teams are chosen (the final score stays
@@ -54,6 +55,13 @@
 
     const ov = s.overlay || {};
     const on = (type) => !!(ov.visible && ov.type === type);
+
+    // Event popups (goal / card / sub) and the VAR banner have their own state.
+    const gr = s.graphic || {};
+    const grOn = (type) => !!(gr.visible && gr.type === type);
+    const gd = gr.data || {};
+    const v = s.var || {};
+    const call = s.refCall;
 
     return {
       status: live ? 'live' : 'waiting',
@@ -66,10 +74,10 @@
         awayPossession: m.awayPossession ?? 50,
         homeFouls: sum(side(m.homeTeam), 'fouls'),
         awayFouls: sum(side(m.awayTeam), 'fouls'),
-        homeFormation: '4-3-3',
-        awayFormation: '4-3-3',
+        homeFormation: m.homeFormation || '4-3-3',
+        awayFormation: m.awayFormation || '4-3-3',
         time: m.timer || 0,
-        addedTime: 0,
+        addedTime: m.addedTime || 0,
       },
       players: { home: side(m.homeTeam), away: side(m.awayTeam) },
       goals: (s.goalHistory || []).map((g) => ({
@@ -85,18 +93,44 @@
         pts: r.points,
       })),
       overlays: {
-        goal: { visible: false },
-        card: { visible: false },
-        sub: { visible: false },
-        var: { visible: on('var'), phase: '', checkType: '', verdict: '' },
+        goal: {
+          visible: grOn('goal'),
+          title: gd.title,
+          team: gd.team,
+          scorer: gd.scorer,
+          number: gd.number,
+          assist: gd.assist,
+          assistNumber: gd.assistNumber,
+        },
+        card: {
+          visible: grOn('card'),
+          team: gd.team,
+          player: gd.player,
+          number: gd.number,
+          type: gd.type,
+        },
+        sub: {
+          visible: grOn('sub'),
+          team: gd.team,
+          out: gd.out,
+          outNumber: gd.outNumber,
+          in: gd.in,
+          inNumber: gd.inNumber,
+        },
+        var: {
+          visible: !!v.visible,
+          phase: v.phase || '',
+          checkType: v.checkType || '',
+          verdict: v.verdict || '',
+        },
         possession: on('possession'),
         fouls: on('fouls'),
         formations: on('formations'),
         table: on('table'),
-        offside: on('offside'),
+        offside: call === 'offside',
         advantage: on('advantage'),
-        penaltyCall: on('penalty') || on('penaltyCall'),
-        handball: on('handball'),
+        penaltyCall: call === 'penalty',
+        handball: call === 'handball',
         replay: on('replay'),
       },
     };
@@ -233,7 +267,7 @@
 
     const g = document.getElementById('goal-overlay');
     if (state.overlays.goal.visible) {
-      document.getElementById('g-title').textContent = 'GOAL!';
+      document.getElementById('g-title').textContent = state.overlays.goal.title || 'GOAL!';
       document.getElementById('g-team').textContent = state.overlays.goal.team;
       document.getElementById('g-scorer').textContent =
         (state.overlays.goal.number ? '#' + state.overlays.goal.number + ' ' : '') + state.overlays.goal.scorer;
