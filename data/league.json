@@ -11,105 +11,17 @@
       "ga": 0,
       "points": 0,
       "players": [
-        {
-          "number": 1,
-          "name": "9A Player 1",
-          "goals": 0,
-          "assists": 0,
-          "fouls": 0,
-          "yellow_cards": 0,
-          "red_cards": 0
-        },
-        {
-          "number": 2,
-          "name": "9A Player 2",
-          "goals": 0,
-          "assists": 0,
-          "fouls": 0,
-          "yellow_cards": 0,
-          "red_cards": 0
-        },
-        {
-          "number": 3,
-          "name": "9A Player 3",
-          "goals": 0,
-          "assists": 0,
-          "fouls": 0,
-          "yellow_cards": 0,
-          "red_cards": 0
-        },
-        {
-          "number": 4,
-          "name": "9A Player 4",
-          "goals": 0,
-          "assists": 0,
-          "fouls": 0,
-          "yellow_cards": 0,
-          "red_cards": 0
-        },
-        {
-          "number": 5,
-          "name": "9A Player 5",
-          "goals": 0,
-          "assists": 0,
-          "fouls": 0,
-          "yellow_cards": 0,
-          "red_cards": 0
-        },
-        {
-          "number": 6,
-          "name": "9A Player 6",
-          "goals": 0,
-          "assists": 0,
-          "fouls": 0,
-          "yellow_cards": 0,
-          "red_cards": 0
-        },
-        {
-          "number": 7,
-          "name": "9A Player 7",
-          "goals": 0,
-          "assists": 0,
-          "fouls": 0,
-          "yellow_cards": 0,
-          "red_cards": 0
-        },
-        {
-          "number": 8,
-          "name": "9A Player 8",
-          "goals": 0,
-          "assists": 0,
-          "fouls": 0,
-          "yellow_cards": 0,
-          "red_cards": 0
-        },
-        {
-          "number": 9,
-          "name": "9A Player 9",
-          "goals": 0,
-          "assists": 0,
-          "fouls": 0,
-          "yellow_cards": 0,
-          "red_cards": 0
-        },
-        {
-          "number": 10,
-          "name": "9A Player 10",
-          "goals": 0,
-          "assists": 0,
-          "fouls": 0,
-          "yellow_cards": 0,
-          "red_cards": 0
-        },
-        {
-          "number": 11,
-          "name": "9A Player 11",
-          "goals": 0,
-          "assists": 0,
-          "fouls": 0,
-          "yellow_cards": 0,
-          "red_cards": 0
-        }
+        { "number": 1, "name": "9A Player 1", "goals": 0, "assists": 0, "fouls": 0, "yellow_cards": 0, "red_cards": 0 },
+        { "number": 2, "name": "9A Player 2", "goals": 0, "assists": 0, "fouls": 0, "yellow_cards": 0, "red_cards": 0 },
+        { "number": 3, "name": "9A Player 3", "goals": 0, "assists": 0, "fouls": 0, "yellow_cards": 0, "red_cards": 0 },
+        { "number": 4, "name": "9A Player 4", "goals": 0, "assists": 0, "fouls": 0, "yellow_cards": 0, "red_cards": 0 },
+        { "number": 5, "name": "9A Player 5", "goals": 0, "assists": 0, "fouls": 0, "yellow_cards": 0, "red_cards": 0 },
+        { "number": 6, "name": "9A Player 6", "goals": 0, "assists": 0, "fouls": 0, "yellow_cards": 0, "red_cards": 0 },
+        { "number": 7, "name": "9A Player 7", "goals": 0, "assists": 0, "fouls": 0, "yellow_cards": 0, "red_cards": 0 },
+        { "number": 8, "name": "9A Player 8", "goals": 0, "assists": 0, "fouls": 0, "yellow_cards": 0, "red_cards": 0 },
+        { "number": 9, "name": "9A Player 9", "goals": 0, "assists": 0, "fouls": 0, "yellow_cards": 0, "red_cards": 0 },
+        { "number": 10, "name": "9A Player 10", "goals": 0, "assists": 0, "fouls": 0, "yellow_cards": 0, "red_cards": 0 },
+        { "number": 11, "name": "9A Player 11", "goals": 0, "assists": 0, "fouls": 0, "yellow_cards": 0, "red_cards": 0 }
       ]
     },
     {
@@ -123,329 +35,17 @@
       "ga": 0,
       "points": 0,
       "players": [
-        {
-          "number": 1,
-          "name": "9B Player 1",
-          "goals": 0,
-          "assists": 0,
-          "fouls": 0,
-          "yellow_cards": 0,
-          "red_cards": 0
-        },
-        {
-          "number": 2,
-          "name": "9B Player 2",
-          "goals": 0,
-          "assists": 0,
-          "fouls": 0,
-          "yellow_cards": 0,
-          "red_cards": 0
-        },
-        {
-          "number": 3,
-          "name": "9B Player 3",
-          "goals": 0,
-          "assists": 0,
-          "fouls": 0,
-          "yellow_cards": 0,
-          "red_cards": 0
-        },
-        {
-          "number": 4,
-          "name": "9B Player 4",
-          "goals": 0,
-          "assists": 0,
-          "fouls": 0,
-          "yellow_cards": 0,
-          "red_cards": 0
-        },
-        {
-          "number": 5,
-          "name": "9B Player 5",
-          "goals": 0,
-          "assists": 0,
-          "fouls": 0,
-          "yellow_cards": 0,
-          "red_cards": 0
-        },
-        {
-          "number": 6,
-          "name": "9B Player 6",
-          "goals": 0,
-          "assists": 0,
-          "fouls": 0,
-          "yellow_cards": 0,
-          "red_cards": 0
-        },
-        {
-          "number": 7,
-          "name": "9B Player 7",
-          "goals": 0,
-          "assists": 0,
-          "fouls": 0,
-          "yellow_cards": 0,
-          "red_cards": 0
-        },
-        {
-          "number": 8,
-          "name": "9B Player 8",
-          "goals": 0,
-          "assists": 0,
-          "fouls": 0,
-          "yellow_cards": 0,
-          "red_cards": 0
-        },
-        {
-          "number": 9,
-          "name": "9B Player 9",
-          "goals": 0,
-          "assists": 0,
-          "fouls": 0,
-          "yellow_cards": 0,
-          "red_cards": 0
-        },
-        {
-          "number": 10,
-          "name": "9B Player 10",
-          "goals": 0,
-          "assists": 0,
-          "fouls": 0,
-          "yellow_cards": 0,
-          "red_cards": 0
-        },
-        {
-          "number": 11,
-          "name": "9B Player 11",
-          "goals": 0,
-          "assists": 0,
-          "fouls": 0,
-          "yellow_cards": 0,
-          "red_cards": 0
-        }
-      ]
-    },
-    {
-      "id": "9a",
-      "name": "9A",
-      "played": 0,
-      "won": 0,
-      "drawn": 0,
-      "lost": 0,
-      "gf": 0,
-      "ga": 0,
-      "points": 0,
-      "players": [
-        {
-          "number": 1,
-          "name": "9A Player 1",
-          "goals": 0,
-          "assists": 0,
-          "fouls": 0,
-          "yellow_cards": 0,
-          "red_cards": 0
-        },
-        {
-          "number": 2,
-          "name": "9A Player 2",
-          "goals": 0,
-          "assists": 0,
-          "fouls": 0,
-          "yellow_cards": 0,
-          "red_cards": 0
-        },
-        {
-          "number": 3,
-          "name": "9A Player 3",
-          "goals": 0,
-          "assists": 0,
-          "fouls": 0,
-          "yellow_cards": 0,
-          "red_cards": 0
-        },
-        {
-          "number": 4,
-          "name": "9A Player 4",
-          "goals": 0,
-          "assists": 0,
-          "fouls": 0,
-          "yellow_cards": 0,
-          "red_cards": 0
-        },
-        {
-          "number": 5,
-          "name": "9A Player 5",
-          "goals": 0,
-          "assists": 0,
-          "fouls": 0,
-          "yellow_cards": 0,
-          "red_cards": 0
-        },
-        {
-          "number": 6,
-          "name": "9A Player 6",
-          "goals": 0,
-          "assists": 0,
-          "fouls": 0,
-          "yellow_cards": 0,
-          "red_cards": 0
-        },
-        {
-          "number": 7,
-          "name": "9A Player 7",
-          "goals": 0,
-          "assists": 0,
-          "fouls": 0,
-          "yellow_cards": 0,
-          "red_cards": 0
-        },
-        {
-          "number": 8,
-          "name": "9A Player 8",
-          "goals": 0,
-          "assists": 0,
-          "fouls": 0,
-          "yellow_cards": 0,
-          "red_cards": 0
-        },
-        {
-          "number": 9,
-          "name": "9A Player 9",
-          "goals": 0,
-          "assists": 0,
-          "fouls": 0,
-          "yellow_cards": 0,
-          "red_cards": 0
-        },
-        {
-          "number": 10,
-          "name": "9A Player 10",
-          "goals": 0,
-          "assists": 0,
-          "fouls": 0,
-          "yellow_cards": 0,
-          "red_cards": 0
-        },
-        {
-          "number": 11,
-          "name": "9A Player 11",
-          "goals": 0,
-          "assists": 0,
-          "fouls": 0,
-          "yellow_cards": 0,
-          "red_cards": 0
-        }
-      ]
-    },
-    {
-      "id": "9b",
-      "name": "9B",
-      "played": 0,
-      "won": 0,
-      "drawn": 0,
-      "lost": 0,
-      "gf": 0,
-      "ga": 0,
-      "points": 0,
-      "players": [
-        {
-          "number": 1,
-          "name": "9B Player 1",
-          "goals": 0,
-          "assists": 0,
-          "fouls": 0,
-          "yellow_cards": 0,
-          "red_cards": 0
-        },
-        {
-          "number": 2,
-          "name": "9B Player 2",
-          "goals": 0,
-          "assists": 0,
-          "fouls": 0,
-          "yellow_cards": 0,
-          "red_cards": 0
-        },
-        {
-          "number": 3,
-          "name": "9B Player 3",
-          "goals": 0,
-          "assists": 0,
-          "fouls": 0,
-          "yellow_cards": 0,
-          "red_cards": 0
-        },
-        {
-          "number": 4,
-          "name": "9B Player 4",
-          "goals": 0,
-          "assists": 0,
-          "fouls": 0,
-          "yellow_cards": 0,
-          "red_cards": 0
-        },
-        {
-          "number": 5,
-          "name": "9B Player 5",
-          "goals": 0,
-          "assists": 0,
-          "fouls": 0,
-          "yellow_cards": 0,
-          "red_cards": 0
-        },
-        {
-          "number": 6,
-          "name": "9B Player 6",
-          "goals": 0,
-          "assists": 0,
-          "fouls": 0,
-          "yellow_cards": 0,
-          "red_cards": 0
-        },
-        {
-          "number": 7,
-          "name": "9B Player 7",
-          "goals": 0,
-          "assists": 0,
-          "fouls": 0,
-          "yellow_cards": 0,
-          "red_cards": 0
-        },
-        {
-          "number": 8,
-          "name": "9B Player 8",
-          "goals": 0,
-          "assists": 0,
-          "fouls": 0,
-          "yellow_cards": 0,
-          "red_cards": 0
-        },
-        {
-          "number": 9,
-          "name": "9B Player 9",
-          "goals": 0,
-          "assists": 0,
-          "fouls": 0,
-          "yellow_cards": 0,
-          "red_cards": 0
-        },
-        {
-          "number": 10,
-          "name": "9B Player 10",
-          "goals": 0,
-          "assists": 0,
-          "fouls": 0,
-          "yellow_cards": 0,
-          "red_cards": 0
-        },
-        {
-          "number": 11,
-          "name": "9B Player 11",
-          "goals": 0,
-          "assists": 0,
-          "fouls": 0,
-          "yellow_cards": 0,
-          "red_cards": 0
-        }
+        { "number": 1, "name": "9B Player 1", "goals": 0, "assists": 0, "fouls": 0, "yellow_cards": 0, "red_cards": 0 },
+        { "number": 2, "name": "9B Player 2", "goals": 0, "assists": 0, "fouls": 0, "yellow_cards": 0, "red_cards": 0 },
+        { "number": 3, "name": "9B Player 3", "goals": 0, "assists": 0, "fouls": 0, "yellow_cards": 0, "red_cards": 0 },
+        { "number": 4, "name": "9B Player 4", "goals": 0, "assists": 0, "fouls": 0, "yellow_cards": 0, "red_cards": 0 },
+        { "number": 5, "name": "9B Player 5", "goals": 0, "assists": 0, "fouls": 0, "yellow_cards": 0, "red_cards": 0 },
+        { "number": 6, "name": "9B Player 6", "goals": 0, "assists": 0, "fouls": 0, "yellow_cards": 0, "red_cards": 0 },
+        { "number": 7, "name": "9B Player 7", "goals": 0, "assists": 0, "fouls": 0, "yellow_cards": 0, "red_cards": 0 },
+        { "number": 8, "name": "9B Player 8", "goals": 0, "assists": 0, "fouls": 0, "yellow_cards": 0, "red_cards": 0 },
+        { "number": 9, "name": "9B Player 9", "goals": 0, "assists": 0, "fouls": 0, "yellow_cards": 0, "red_cards": 0 },
+        { "number": 10, "name": "9B Player 10", "goals": 0, "assists": 0, "fouls": 0, "yellow_cards": 0, "red_cards": 0 },
+        { "number": 11, "name": "9B Player 11", "goals": 0, "assists": 0, "fouls": 0, "yellow_cards": 0, "red_cards": 0 }
       ]
     },
     {
@@ -459,105 +59,17 @@
       "ga": 0,
       "points": 0,
       "players": [
-        {
-          "number": 1,
-          "name": "11C Player 1",
-          "goals": 0,
-          "assists": 0,
-          "fouls": 0,
-          "yellow_cards": 0,
-          "red_cards": 0
-        },
-        {
-          "number": 2,
-          "name": "11C Player 2",
-          "goals": 0,
-          "assists": 0,
-          "fouls": 0,
-          "yellow_cards": 0,
-          "red_cards": 0
-        },
-        {
-          "number": 3,
-          "name": "11C Player 3",
-          "goals": 0,
-          "assists": 0,
-          "fouls": 0,
-          "yellow_cards": 0,
-          "red_cards": 0
-        },
-        {
-          "number": 4,
-          "name": "11C Player 4",
-          "goals": 0,
-          "assists": 0,
-          "fouls": 0,
-          "yellow_cards": 0,
-          "red_cards": 0
-        },
-        {
-          "number": 5,
-          "name": "11C Player 5",
-          "goals": 0,
-          "assists": 0,
-          "fouls": 0,
-          "yellow_cards": 0,
-          "red_cards": 0
-        },
-        {
-          "number": 6,
-          "name": "11C Player 6",
-          "goals": 0,
-          "assists": 0,
-          "fouls": 0,
-          "yellow_cards": 0,
-          "red_cards": 0
-        },
-        {
-          "number": 7,
-          "name": "11C Player 7",
-          "goals": 0,
-          "assists": 0,
-          "fouls": 0,
-          "yellow_cards": 0,
-          "red_cards": 0
-        },
-        {
-          "number": 8,
-          "name": "11C Player 8",
-          "goals": 0,
-          "assists": 0,
-          "fouls": 0,
-          "yellow_cards": 0,
-          "red_cards": 0
-        },
-        {
-          "number": 9,
-          "name": "11C Player 9",
-          "goals": 0,
-          "assists": 0,
-          "fouls": 0,
-          "yellow_cards": 0,
-          "red_cards": 0
-        },
-        {
-          "number": 10,
-          "name": "11C Player 10",
-          "goals": 0,
-          "assists": 0,
-          "fouls": 0,
-          "yellow_cards": 0,
-          "red_cards": 0
-        },
-        {
-          "number": 11,
-          "name": "11C Player 11",
-          "goals": 0,
-          "assists": 0,
-          "fouls": 0,
-          "yellow_cards": 0,
-          "red_cards": 0
-        }
+        { "number": 1, "name": "11C Player 1", "goals": 0, "assists": 0, "fouls": 0, "yellow_cards": 0, "red_cards": 0 },
+        { "number": 2, "name": "11C Player 2", "goals": 0, "assists": 0, "fouls": 0, "yellow_cards": 0, "red_cards": 0 },
+        { "number": 3, "name": "11C Player 3", "goals": 0, "assists": 0, "fouls": 0, "yellow_cards": 0, "red_cards": 0 },
+        { "number": 4, "name": "11C Player 4", "goals": 0, "assists": 0, "fouls": 0, "yellow_cards": 0, "red_cards": 0 },
+        { "number": 5, "name": "11C Player 5", "goals": 0, "assists": 0, "fouls": 0, "yellow_cards": 0, "red_cards": 0 },
+        { "number": 6, "name": "11C Player 6", "goals": 0, "assists": 0, "fouls": 0, "yellow_cards": 0, "red_cards": 0 },
+        { "number": 7, "name": "11C Player 7", "goals": 0, "assists": 0, "fouls": 0, "yellow_cards": 0, "red_cards": 0 },
+        { "number": 8, "name": "11C Player 8", "goals": 0, "assists": 0, "fouls": 0, "yellow_cards": 0, "red_cards": 0 },
+        { "number": 9, "name": "11C Player 9", "goals": 0, "assists": 0, "fouls": 0, "yellow_cards": 0, "red_cards": 0 },
+        { "number": 10, "name": "11C Player 10", "goals": 0, "assists": 0, "fouls": 0, "yellow_cards": 0, "red_cards": 0 },
+        { "number": 11, "name": "11C Player 11", "goals": 0, "assists": 0, "fouls": 0, "yellow_cards": 0, "red_cards": 0 }
       ]
     },
     {
@@ -571,105 +83,17 @@
       "ga": 0,
       "points": 0,
       "players": [
-        {
-          "number": 1,
-          "name": "12B Player 1",
-          "goals": 0,
-          "assists": 0,
-          "fouls": 0,
-          "yellow_cards": 0,
-          "red_cards": 0
-        },
-        {
-          "number": 2,
-          "name": "12B Player 2",
-          "goals": 0,
-          "assists": 0,
-          "fouls": 0,
-          "yellow_cards": 0,
-          "red_cards": 0
-        },
-        {
-          "number": 3,
-          "name": "12B Player 3",
-          "goals": 0,
-          "assists": 0,
-          "fouls": 0,
-          "yellow_cards": 0,
-          "red_cards": 0
-        },
-        {
-          "number": 4,
-          "name": "12B Player 4",
-          "goals": 0,
-          "assists": 0,
-          "fouls": 0,
-          "yellow_cards": 0,
-          "red_cards": 0
-        },
-        {
-          "number": 5,
-          "name": "12B Player 5",
-          "goals": 0,
-          "assists": 0,
-          "fouls": 0,
-          "yellow_cards": 0,
-          "red_cards": 0
-        },
-        {
-          "number": 6,
-          "name": "12B Player 6",
-          "goals": 0,
-          "assists": 0,
-          "fouls": 0,
-          "yellow_cards": 0,
-          "red_cards": 0
-        },
-        {
-          "number": 7,
-          "name": "12B Player 7",
-          "goals": 0,
-          "assists": 0,
-          "fouls": 0,
-          "yellow_cards": 0,
-          "red_cards": 0
-        },
-        {
-          "number": 8,
-          "name": "12B Player 8",
-          "goals": 0,
-          "assists": 0,
-          "fouls": 0,
-          "yellow_cards": 0,
-          "red_cards": 0
-        },
-        {
-          "number": 9,
-          "name": "12B Player 9",
-          "goals": 0,
-          "assists": 0,
-          "fouls": 0,
-          "yellow_cards": 0,
-          "red_cards": 0
-        },
-        {
-          "number": 10,
-          "name": "12B Player 10",
-          "goals": 0,
-          "assists": 0,
-          "fouls": 0,
-          "yellow_cards": 0,
-          "red_cards": 0
-        },
-        {
-          "number": 11,
-          "name": "12B Player 11",
-          "goals": 0,
-          "assists": 0,
-          "fouls": 0,
-          "yellow_cards": 0,
-          "red_cards": 0
-        }
+        { "number": 1, "name": "12B Player 1", "goals": 0, "assists": 0, "fouls": 0, "yellow_cards": 0, "red_cards": 0 },
+        { "number": 2, "name": "12B Player 2", "goals": 0, "assists": 0, "fouls": 0, "yellow_cards": 0, "red_cards": 0 },
+        { "number": 3, "name": "12B Player 3", "goals": 0, "assists": 0, "fouls": 0, "yellow_cards": 0, "red_cards": 0 },
+        { "number": 4, "name": "12B Player 4", "goals": 0, "assists": 0, "fouls": 0, "yellow_cards": 0, "red_cards": 0 },
+        { "number": 5, "name": "12B Player 5", "goals": 0, "assists": 0, "fouls": 0, "yellow_cards": 0, "red_cards": 0 },
+        { "number": 6, "name": "12B Player 6", "goals": 0, "assists": 0, "fouls": 0, "yellow_cards": 0, "red_cards": 0 },
+        { "number": 7, "name": "12B Player 7", "goals": 0, "assists": 0, "fouls": 0, "yellow_cards": 0, "red_cards": 0 },
+        { "number": 8, "name": "12B Player 8", "goals": 0, "assists": 0, "fouls": 0, "yellow_cards": 0, "red_cards": 0 },
+        { "number": 9, "name": "12B Player 9", "goals": 0, "assists": 0, "fouls": 0, "yellow_cards": 0, "red_cards": 0 },
+        { "number": 10, "name": "12B Player 10", "goals": 0, "assists": 0, "fouls": 0, "yellow_cards": 0, "red_cards": 0 },
+        { "number": 11, "name": "12B Player 11", "goals": 0, "assists": 0, "fouls": 0, "yellow_cards": 0, "red_cards": 0 }
       ]
     }
   ]
