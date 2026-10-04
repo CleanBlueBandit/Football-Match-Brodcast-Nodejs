@@ -75,13 +75,6 @@ app.use(express.static(path.join(__dirname, 'public'), { index: false }));
 const PORT = process.env.PORT || 3000;
 
 async function start() {
-  // Load standings from the JSON file into Postgres before the websocket layer
-  // reads the teams table. A bad or missing file must not stop the server.
-  try {
-    await importStandings();
-  } catch (err) {
-    console.error('Standings import failed (continuing without it):', err);
-  }
 
   setupWebSocket(server, sessionMiddleware);
   server.listen(PORT, () => {
