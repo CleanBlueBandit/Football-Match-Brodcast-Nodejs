@@ -1,14 +1,20 @@
 const { WebSocketServer, WebSocket } = require('ws');
 const { prisma } = require('../db/prisma');
 const { canRunCommand, isRole } = require('../lib/roles');
-const { STAT_FIELDS, zeroStats } = require('../lib/leagueTotals');
 const { finishLiveMatch } = require('../lib/matches');
 
 let state = null;
 let wss = null;
 let timerInterval = null;
 let heartbeatInterval = null;
-let saveTimeout = null;
+let overlayTimer = null; // kept out of `state`: a Timeout object can't be JSON-serialised
+let finishing = false;
+
+// Per-player numbers tracked during the live match (in memory only; they are
+// written to the database once, by finishLiveMatch, when the match ends).
+const LIVE_STATS = ['goals', 'assists', 'fouls', 'yellowCards', 'redCards'];
+// The control panel / older code may use snake_case names for the card stats.
+const STAT_ALIASES = { yellow_cards: 'yellowCards', red_cards: 'redCards' };
 
 const DEFAULT_STATE = {
     teams: [],
@@ -19,9 +25,12 @@ const DEFAULT_STATE = {
         awayTeam: null,
         homeScore: 0,
         awayScore: 0,
+        homePossession: 50,
+        awayPossession: 50,
         timer: 0,
         running: false,
         startedAt: null,
+        matchId: null, // id of the live row in the `matches` table
     },
     goalHistory: [],
     overlay: {
@@ -66,8 +75,25 @@ async function loadLeague() {
         },
     });
 
+    // teams: league standings (from the DB).
+    // players: this match's numbers only, all starting at zero. Career totals
+    // stay in the DB and are updated when a match is finished.
+    state.teams = teams.map(({ players, ...team }) => team);
+    state.players = teams.flatMap((team) =>
+        team.players.map((player) => ({
+            id: player.id,
+            teamId: player.teamId,
+            number: player.number,
+            name: player.name,
+            ...zeroPlayerStats(),
+        }))
+    );
+}
+
+// Re-reads the standings after a finished match changed them.
+async function refreshStandings() {
+    const teams = await prisma.team.findMany({ orderBy: { name: 'asc' } });
     state.teams = teams;
-    state.players = teams.flatMap((team) => team.players);
 }
 
 function zeroPlayerStats() {
@@ -133,56 +159,6 @@ function publicState() {
     };
 }
 
-function scheduleSave() {
-    if (saveTimeout) clearTimeout(saveTimeout);
-
-    saveTimeout = setTimeout(async () => {
-        saveTimeout = null;
-
-        try {
-            await saveState();
-        } catch (error) {
-            console.error('Failed to save match state:', error);
-        }
-    }, 500);
-}
-
-async function saveState() {
-    if (!state) return;
-
-    for (const team of state.teams) {
-        await prisma.team.update({
-            where: {
-                id: team.id,
-            },
-            data: {
-                played: team.played || 0,
-                won: team.won || 0,
-                drawn: team.drawn || 0,
-                lost: team.lost || 0,
-                gf: team.gf || 0,
-                ga: team.ga || 0,
-                points: team.points || 0,
-            },
-        });
-    }
-
-    for (const player of state.players) {
-        await prisma.player.update({
-            where: {
-                id: player.id,
-            },
-            data: {
-                goals: player.goals || 0,
-                assists: player.assists || 0,
-                fouls: player.fouls || 0,
-                yellowCards: player.yellowCards || 0,
-                redCards: player.redCards || 0,
-            },
-        });
-    }
-}
-
 function broadcast() {
     if (!wss) return;
 
@@ -199,11 +175,9 @@ function broadcast() {
 }
 
 function clearAutoHideTimers() {
-    if (!state?.overlay) return;
-
-    if (state.overlay.autoHideTimer) {
-        clearTimeout(state.overlay.autoHideTimer);
-        state.overlay.autoHideTimer = null;
+    if (overlayTimer) {
+        clearTimeout(overlayTimer);
+        overlayTimer = null;
     }
 }
 
@@ -224,78 +198,160 @@ function startWebSocketHeartbeat() {
     }, 30000);
 }
 
-function updateTeamStats(homeTeam, awayTeam, homeScore, awayScore) {
-    const home = state.teams.find((team) => team.id === homeTeam);
-    const away = state.teams.find((team) => team.id === awayTeam);
-
-    if (!home || !away) return;
-
-    home.played = (home.played || 0) + 1;
-    away.played = (away.played || 0) + 1;
-
-    home.gf = (home.gf || 0) + homeScore;
-    home.ga = (home.ga || 0) + awayScore;
-
-    away.gf = (away.gf || 0) + awayScore;
-    away.ga = (away.ga || 0) + homeScore;
-
-    if (homeScore > awayScore) {
-        home.won = (home.won || 0) + 1;
-        away.lost = (away.lost || 0) + 1;
-        home.points = (home.points || 0) + 3;
-    } else if (homeScore < awayScore) {
-        away.won = (away.won || 0) + 1;
-        home.lost = (home.lost || 0) + 1;
-        away.points = (away.points || 0) + 3;
-    } else {
-        home.drawn = (home.drawn || 0) + 1;
-        away.drawn = (away.drawn || 0) + 1;
-        home.points = (home.points || 0) + 1;
-        away.points = (away.points || 0) + 1;
+function resetPlayerStats() {
+    for (const player of state.players) {
+        Object.assign(player, zeroPlayerStats());
     }
 }
 
-function resetPlayerStats() {
-    for (const player of state.players) {
-        const zero = zeroPlayerStats();
-
-        for (const field of STAT_FIELDS) {
-            player[field] = zero[field];
-        }
+// Sends a message to one socket only.
+function reply(ws, payload) {
+    if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify(payload));
     }
+}
+
+// A live match that is abandoned (replaced by another one, or the server
+// restarted) goes back to being a fixture, or is removed if it was an ad-hoc
+// match with no schedule.
+async function releaseLiveMatch(matchId) {
+    if (!matchId) return;
+    const row = await prisma.match.findUnique({ where: { id: matchId } });
+    if (!row || row.status !== 'live') return;
+    if (row.scheduledAt) {
+        await prisma.match.update({
+            where: { id: matchId },
+            data: { status: 'scheduled', startedAt: null, updatedAt: new Date() },
+        });
+    } else {
+        await prisma.match.delete({ where: { id: matchId } });
+    }
+}
+
+// The shape lib/matches.js finishLiveMatch() expects.
+function buildLiveState() {
+    const { homeTeam, awayTeam } = state.match;
+    const playerStats = { home: {}, away: {} };
+    let homeFouls = 0;
+    let awayFouls = 0;
+
+    for (const player of state.players) {
+        const side = player.teamId === homeTeam ? 'home' : player.teamId === awayTeam ? 'away' : null;
+        if (!side) continue;
+
+        playerStats[side][String(player.number)] = {
+            number: player.number,
+            name: player.name,
+            goals: player.goals || 0,
+            assists: player.assists || 0,
+            fouls: player.fouls || 0,
+            yellow_cards: player.yellowCards || 0,
+            red_cards: player.redCards || 0,
+        };
+
+        if (side === 'home') homeFouls += player.fouls || 0;
+        else awayFouls += player.fouls || 0;
+    }
+
+    return {
+        currentMatch: { homeId: homeTeam, awayId: awayTeam },
+        match: {
+            homeScore: state.match.homeScore,
+            awayScore: state.match.awayScore,
+            homeFouls,
+            awayFouls,
+            homePossession: state.match.homePossession ?? 50,
+            awayPossession: state.match.awayPossession ?? 50,
+        },
+        playerStats,
+    };
 }
 
 function roleOf(req, sessionMiddleware) {
     return new Promise((resolve) => {
         sessionMiddleware(req, {}, () => {
-            resolve(req.session?.user?.role || null);
+            resolve(req.session?.loggedin === true ? req.session.role || null : null);
         });
     });
 }
 
-async function handleCommand(command, role) {
+async function handleCommand(command, role, ws) {
     if (!command || typeof command !== 'object') return;
 
     const action = command.action;
 
     if (!canRunCommand(role, action)) {
+        reply(ws, { type: 'rejected', action });
         return;
     }
 
     switch (action) {
         case 'set-match': {
-            state.match.homeTeam = command.homeTeam || null;
-            state.match.awayTeam = command.awayTeam || null;
-            state.match.homeScore = 0;
-            state.match.awayScore = 0;
-            state.match.timer = 0;
-            state.match.running = false;
-            state.match.startedAt = null;
+            const homeId = command.homeTeam || null;
+            const awayId = command.awayTeam || null;
+
+            if (!homeId || !awayId || homeId === awayId) {
+                reply(ws, { type: 'error', message: 'Pick two different teams.' });
+                return;
+            }
+
+            if (
+                !state.teams.some((t) => t.id === homeId) ||
+                !state.teams.some((t) => t.id === awayId)
+            ) {
+                reply(ws, { type: 'error', message: 'Unknown team.' });
+                return;
+            }
+
+            // Whatever was live before is abandoned (nothing is recorded for it).
+            await releaseLiveMatch(state.match.matchId);
+            state.match.matchId = null;
+
+            // Start an existing fixture, or create a match row on the spot.
+            let row;
+            const fixtureId = Number(command.matchId);
+
+            if (Number.isInteger(fixtureId) && fixtureId > 0) {
+                const fixture = await prisma.match.findUnique({ where: { id: fixtureId } });
+
+                if (!fixture || fixture.status !== 'scheduled') {
+                    reply(ws, { type: 'error', message: 'That fixture is not available to start.' });
+                    return;
+                }
+
+                row = await prisma.match.update({
+                    where: { id: fixtureId },
+                    data: { status: 'live', startedAt: new Date(), updatedAt: new Date() },
+                });
+            } else {
+                row = await prisma.match.create({
+                    data: {
+                        homeTeamId: homeId,
+                        awayTeamId: awayId,
+                        status: 'live',
+                        startedAt: new Date(),
+                    },
+                });
+            }
+
+            state.match = {
+                ...state.match,
+                // A fixture decides its own teams.
+                homeTeam: row.homeTeamId,
+                awayTeam: row.awayTeamId,
+                homeScore: 0,
+                awayScore: 0,
+                homePossession: 50,
+                awayPossession: 50,
+                timer: 0,
+                running: false,
+                startedAt: null,
+                matchId: row.id,
+            };
             state.goalHistory = [];
 
             resetPlayerStats();
             broadcast();
-            scheduleSave();
             break;
         }
 
@@ -347,7 +403,6 @@ async function handleCommand(command, role) {
             }
 
             broadcast();
-            scheduleSave();
             break;
         }
 
@@ -363,12 +418,13 @@ async function handleCommand(command, role) {
             player.assists = (player.assists || 0) + 1;
 
             broadcast();
-            scheduleSave();
             break;
         }
 
         case 'stat': {
-            if (!command.playerId || !STAT_FIELDS.includes(command.stat)) {
+            const stat = STAT_ALIASES[command.stat] || command.stat;
+
+            if (!command.playerId || !LIVE_STATS.includes(stat)) {
                 return;
             }
 
@@ -378,13 +434,12 @@ async function handleCommand(command, role) {
 
             if (!player) return;
 
-            player[command.stat] = Math.max(
+            player[stat] = Math.max(
                 0,
-                (player[command.stat] || 0) + (command.amount || 1)
+                (player[stat] || 0) + (Number(command.amount) || 1)
             );
 
             broadcast();
-            scheduleSave();
             break;
         }
 
@@ -398,9 +453,9 @@ async function handleCommand(command, role) {
             };
 
             if (command.duration) {
-                state.overlay.autoHideTimer = setTimeout(() => {
+                overlayTimer = setTimeout(() => {
+                    overlayTimer = null;
                     state.overlay.visible = false;
-                    state.overlay.autoHideTimer = null;
                     broadcast();
                 }, command.duration);
             }
@@ -410,28 +465,38 @@ async function handleCommand(command, role) {
         }
 
         case 'finish-match': {
-            if (!state.match.homeTeam || !state.match.awayTeam) return;
+            const matchId = state.match.matchId;
 
+            // Nothing live (e.g. a double click), or already being saved.
+            if (!matchId || finishing) return;
+            finishing = true;
+
+            // The panel's "Record result and player stats" checkbox; saving is the default.
+            const saveResult = command.saveResult !== false;
+
+            try {
+                await finishLiveMatch(prisma, matchId, buildLiveState(), saveResult);
+            } catch (error) {
+                console.error('Failed to finish match:', error);
+                reply(ws, {
+                    type: 'error',
+                    message: 'The match could not be saved. It is still live - try ending it again.',
+                });
+                return;
+            } finally {
+                finishing = false;
+            }
+
+            // Stop the clock, keep the final score on screen, pick up the new table.
             state.match.running = false;
             state.match.startedAt = null;
+            state.match.matchId = null;
 
-            updateTeamStats(
-                state.match.homeTeam,
-                state.match.awayTeam,
-                state.match.homeScore,
-                state.match.awayScore
+            await refreshStandings().catch((error) =>
+                console.error('Failed to refresh standings:', error)
             );
 
-            await finishLiveMatch({
-                homeTeamId: state.match.homeTeam,
-                awayTeamId: state.match.awayTeam,
-                homeScore: state.match.homeScore,
-                awayScore: state.match.awayScore,
-                goalHistory: state.goalHistory,
-            });
-
             broadcast();
-            await saveState();
             break;
         }
 
@@ -459,6 +524,10 @@ async function setupWebSocket(server, sessionMiddleware) {
     state = mergeDefaults({}, DEFAULT_STATE);
 
     await loadLeague();
+
+    // A restart loses the in-memory live state; give back any match left 'live'.
+    const orphans = await prisma.match.findMany({ where: { status: 'live' }, select: { id: true } });
+    for (const { id } of orphans) await releaseLiveMatch(id);
 
     wss = new WebSocketServer({
         server,
@@ -489,7 +558,7 @@ async function setupWebSocket(server, sessionMiddleware) {
                 const command = JSON.parse(raw.toString());
                 const role = await rolePromise;
 
-                await handleCommand(command, role);
+                await handleCommand(command, role, ws);
             } catch (error) {
                 console.error('WebSocket message error:', error);
             }

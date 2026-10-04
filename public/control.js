@@ -33,6 +33,8 @@ function connectWebSocket() {
         renderControl();
       } else if (msg.type === 'rejected') {
         alert('You do not have permission to do that.');
+      } else if (msg.type === 'error') {
+        alert(msg.message || 'Something went wrong.');
       }
     } catch (error) {
       console.error('Invalid WebSocket message:', error);
@@ -528,25 +530,18 @@ window.startScheduled = function (matchId) {
   loadScheduled()
     .then(async () => {
       try {
-        const res = await fetch(
-          `/api/matches/${encodeURIComponent(matchId)}`
-        );
+        // /api/matches is readable by broadcasters; /api/matches/:id is statistician-only.
+        const res = await fetch('/api/matches?status=scheduled');
 
         if (!res.ok) {
-          throw new Error(
-            `HTTP ${res.status}`
-          );
+          throw new Error(`HTTP ${res.status}`);
         }
 
-        const match = await res.json();
+        const { matches } = await res.json();
+        const match = (matches || []).find((m) => String(m.id) === String(matchId));
 
-        const homeId =
-          match.homeId ??
-          match.home?.id;
-
-        const awayId =
-          match.awayId ??
-          match.away?.id;
+        const homeId = match?.home?.id;
+        const awayId = match?.away?.id;
 
         if (!homeId || !awayId) {
           throw new Error(
@@ -556,7 +551,8 @@ window.startScheduled = function (matchId) {
 
         startMatchWithTeams(
           homeId,
-          awayId
+          awayId,
+          match.id
         );
       } catch (error) {
         console.error(
@@ -578,7 +574,7 @@ window.startScheduled = function (matchId) {
     });
 };
 
-function startMatchWithTeams(homeId, awayId) {
+function startMatchWithTeams(homeId, awayId, matchId = null) {
   if (!homeId || !awayId) {
     return;
   }
@@ -601,6 +597,7 @@ function startMatchWithTeams(homeId, awayId) {
   send('set-match', {
     homeTeam: homeId,
     awayTeam: awayId,
+    matchId,
   });
 }
 
@@ -676,14 +673,11 @@ window.endMatch = function () {
   }
 
   /*
-   * The current server's finish-match command
-   * ALWAYS saves the result.
-   *
-   * The old client had saveResult, but the current
-   * server does not read it.
+   * saveResult false: the match keeps its stats but never
+   * touches the league table or player totals.
    */
 
-  send('finish-match');
+  send('finish-match', { saveResult: !!save });
 };
 
 // ---- Team dropdowns ----
