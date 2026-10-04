@@ -247,43 +247,10 @@ async function importOverwrite(teams, players) {
   let deletedTeams = 0;
 
   /*
-   * Update existing teams or create missing ones.
-   *
-   * This runs first: players reference teams through a
-   * foreign key, so a new team has to exist before its
-   * players can be created.
-   */
-  for (const {
-    id,
-    ...data
-  } of teams) {
-    const existing =
-      await prisma.team.findUnique({
-        where: { id },
-        select: { id: true },
-      });
-
-    if (existing) {
-      await prisma.team.update({
-        where: { id },
-        data,
-      });
-
-      updatedTeams++;
-    } else {
-      await prisma.team.create({
-        data: {
-          id,
-          ...data,
-        },
-      });
-
-      createdTeams++;
-    }
-  }
-
-  /*
    * Delete players that aren't present in the JSON.
+   *
+   * This must happen before deleting teams because
+   * players reference teams through a foreign key.
    */
 
   const existingPlayers =
@@ -324,8 +291,6 @@ async function importOverwrite(teams, players) {
 
   /*
    * Update existing players or create missing ones.
-   * Their teams already exist (created above), which the
-   * players.team_id foreign key requires.
    */
   for (const {
     teamId,
@@ -374,9 +339,8 @@ async function importOverwrite(teams, players) {
   /*
    * Find and delete teams that aren't in the JSON.
    *
-   * Players of those teams were removed above. Matches that
-   * involve a deleted team are removed with it (the schema
-   * cascades), so say how many before it happens.
+   * Players belonging to those teams have already
+   * been removed above.
    */
   const existingTeams =
     await prisma.team.findMany({
@@ -394,23 +358,6 @@ async function importOverwrite(teams, players) {
         !desiredTeamIds.has(id)
     );
 
-  if (teamsToDelete.length) {
-    const doomedMatches = await prisma.match.count({
-      where: {
-        OR: [
-          { homeTeamId: { in: teamsToDelete.map((t) => t.id) } },
-          { awayTeamId: { in: teamsToDelete.map((t) => t.id) } },
-        ],
-      },
-    });
-
-    if (doomedMatches) {
-      console.warn(
-        `Deleting ${teamsToDelete.length} team(s) not in the file also deletes ${doomedMatches} match(es) involving them.`
-      );
-    }
-  }
-
   for (const team of teamsToDelete) {
     await prisma.team.delete({
       where: {
@@ -419,6 +366,38 @@ async function importOverwrite(teams, players) {
     });
 
     deletedTeams++;
+  }
+
+  /*
+   * Update existing teams or create missing ones.
+   */
+  for (const {
+    id,
+    ...data
+  } of teams) {
+    const existing =
+      await prisma.team.findUnique({
+        where: { id },
+        select: { id: true },
+      });
+
+    if (existing) {
+      await prisma.team.update({
+        where: { id },
+        data,
+      });
+
+      updatedTeams++;
+    } else {
+      await prisma.team.create({
+        data: {
+          id,
+          ...data,
+        },
+      });
+
+      createdTeams++;
+    }
   }
 
   return {
