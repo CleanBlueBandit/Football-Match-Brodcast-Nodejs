@@ -1,10 +1,3 @@
-// Control panel logic. This replaces the old pattern of mutating a local
-// `state` object and POSTing the whole thing to save_state.php: every
-// action here sends a small { type: 'command', action, ... } message over
-// the WebSocket, the server applies it against the authoritative state,
-// persists it to Postgres, and broadcasts the full state back to every
-// connected client (this tab, any other control tab, and tv.html).
-
 let socket = null;
 let state = null;
 let reconnectDelay = 1000;
@@ -232,6 +225,7 @@ window.startMatch = function () {
   const homeId = document.getElementById('start-home').value;
   const awayId = document.getElementById('start-away').value;
   const err = document.getElementById('start-error');
+  console.log({ homeId, awayId, socketState: socket?.readyState });
   if (!homeId || !awayId) {
     err.textContent = 'No teams available. Add some to the database (npm run seed or npx prisma studio).';
     err.hidden = false;
