@@ -576,7 +576,6 @@ function roleOf(req, sessionMiddleware) {
 
 function setupWebSocket(server, sessionMiddleware) {
   wss = new WebSocketServer({ server, path: '/ws' });
-  console.log('WebSocket server ready (state.status protocol: tv.html, /control and /stats all use it)');
 
   loadState()
     .then(() => {
