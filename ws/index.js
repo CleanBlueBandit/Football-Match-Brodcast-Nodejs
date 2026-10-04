@@ -520,21 +520,22 @@ function startTimerBroadcast() {
     }, 1000);
 }
 
-function setupWebSocket(server, sessionMiddleware) {
-  wss = new WebSocketServer({ server, path: '/ws' });
-  console.log('WebSocket server ready (state.status protocol: tv.html, /control and /stats all use it)');
+async function setupWebSocket(server, sessionMiddleware) {
+    state = mergeDefaults({}, DEFAULT_STATE);
 
-  loadState()
-    .then(() => {
-      timerInterval = setInterval(() => {
-        if (state.match.isRunning) {
-          state.match.time += 1;
-          scheduleSave();
-          broadcast();
-        }
-      }, 1000);
-    })
-    .catch((err) => console.error('Failed to load initial state:', err.message));
+    await loadLeague();
+
+    // A restart loses the in-memory live state; give back any match left 'live'.
+    const orphans = await prisma.match.findMany({ where: { status: 'live' }, select: { id: true } });
+    for (const { id } of orphans) await releaseLiveMatch(id);
+
+    wss = new WebSocketServer({
+        server,
+        path: '/ws',
+    });
+
+    startWebSocketHeartbeat();
+    startTimerBroadcast();
 
     wss.on('connection', (ws, req) => {
         ws.isAlive = true;
@@ -575,4 +576,14 @@ function getMatchState() {
     return state;
 }
 
-module.exports = { setupWebSocket, getMatchState };
+process.on('SIGTERM', () => {
+    clearInterval(timerInterval);
+    clearInterval(heartbeatInterval);
+    clearAutoHideTimers();
+});
+
+module.exports = {
+    setupWebSocket,
+    getMatchState,
+    broadcast,
+};
