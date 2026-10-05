@@ -292,6 +292,13 @@ function clampInt(value, min, max) {
     return Math.min(max, Math.max(min, Math.trunc(value)));
 }
 
+// The control page sends ids taken from <select> values, which are strings,
+// while player ids are numbers: compare them as text.
+function findPlayer(id) {
+    if (id === null || id === undefined || id === '') return undefined;
+    return state.players.find((entry) => String(entry.id) === String(id));
+}
+
 function teamExists(id) {
     return state.teams.some((t) => t.id === id);
 }
@@ -563,9 +570,7 @@ async function handleCommand(command, role, ws) {
             });
 
             if (command.playerId) {
-                const player = state.players.find(
-                    (entry) => entry.id === command.playerId
-                );
+                const player = findPlayer(command.playerId);
 
                 if (player) {
                     player.goals = (player.goals || 0) + 1;
@@ -579,9 +584,7 @@ async function handleCommand(command, role, ws) {
         case 'assist': {
             if (!command.playerId) return;
 
-            const player = state.players.find(
-                (entry) => entry.id === command.playerId
-            );
+            const player = findPlayer(command.playerId);
 
             if (!player) return;
 
@@ -598,9 +601,7 @@ async function handleCommand(command, role, ws) {
                 return;
             }
 
-            const player = state.players.find(
-                (entry) => entry.id === command.playerId
-            );
+            const player = findPlayer(command.playerId);
 
             if (!player) return;
 
