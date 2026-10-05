@@ -80,7 +80,7 @@ html, body { margin: 0; padding: 0; font-family: var(--font-main); }
   text-align: center;
 }
 .scorebug-score-big {
-  font-size: 70px;
+  font-size: 35px;
   background: var(--accent);
   color: var(--primary);
   padding: 8px 20px;
