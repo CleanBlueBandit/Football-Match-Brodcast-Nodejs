@@ -1,8 +1,8 @@
 {
   "teams": [
     {
-      "id": "9a",
-      "name": "9A",
+      "id": "8a",
+      "name": "ზაზას ვოლკები",
       "played": 0,
       "won": 0,
       "drawn": 0,
@@ -11,22 +11,65 @@
       "ga": 0,
       "points": 0,
       "players": [
-        { "number": 1, "name": "9A Player 1", "goals": 0, "assists": 0, "fouls": 0, "yellow_cards": 0, "red_cards": 0 },
-        { "number": 2, "name": "9A Player 2", "goals": 0, "assists": 0, "fouls": 0, "yellow_cards": 0, "red_cards": 0 },
-        { "number": 3, "name": "9A Player 3", "goals": 0, "assists": 0, "fouls": 0, "yellow_cards": 0, "red_cards": 0 },
-        { "number": 4, "name": "9A Player 4", "goals": 0, "assists": 0, "fouls": 0, "yellow_cards": 0, "red_cards": 0 },
-        { "number": 5, "name": "9A Player 5", "goals": 0, "assists": 0, "fouls": 0, "yellow_cards": 0, "red_cards": 0 },
-        { "number": 6, "name": "9A Player 6", "goals": 0, "assists": 0, "fouls": 0, "yellow_cards": 0, "red_cards": 0 },
-        { "number": 7, "name": "9A Player 7", "goals": 0, "assists": 0, "fouls": 0, "yellow_cards": 0, "red_cards": 0 },
-        { "number": 8, "name": "9A Player 8", "goals": 0, "assists": 0, "fouls": 0, "yellow_cards": 0, "red_cards": 0 },
-        { "number": 9, "name": "9A Player 9", "goals": 0, "assists": 0, "fouls": 0, "yellow_cards": 0, "red_cards": 0 },
-        { "number": 10, "name": "9A Player 10", "goals": 0, "assists": 0, "fouls": 0, "yellow_cards": 0, "red_cards": 0 },
-        { "number": 11, "name": "9A Player 11", "goals": 0, "assists": 0, "fouls": 0, "yellow_cards": 0, "red_cards": 0 }
+        {
+          "number": 1,
+          "name": "ანდრია ხეჩიკაშვილი",
+          "goals": 0,
+          "assists": 0,
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
+        },
+        {
+          "number": 2,
+          "name": "თომა კვირიკაძე",
+          "goals": 0,
+          "assists": 0,
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
+        },
+        {
+          "number": 3,
+          "name": "ლუკა ფირცხალაიშვილი",
+          "goals": 0,
+          "assists": 0,
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
+        },
+        {
+          "number": 4,
+          "name": "გიორგი ლეიაშვილი",
+          "goals": 0,
+          "assists": 0,
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
+        },
+        {
+          "number": 5,
+          "name": "ანდრია აბესაძე",
+          "goals": 0,
+          "assists": 0,
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
+        },
+        {
+          "number": 6,
+          "name": "ვანო ბერიძე",
+          "goals": 0,
+          "assists": 0,
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
+        }
       ]
     },
     {
-      "id": "9b",
-      "name": "9B",
+      "id": "9a",
+      "name": "Taste of promotion",
       "played": 0,
       "won": 0,
       "drawn": 0,
@@ -35,22 +78,485 @@
       "ga": 0,
       "points": 0,
       "players": [
-        { "number": 1, "name": "9B Player 1", "goals": 0, "assists": 0, "fouls": 0, "yellow_cards": 0, "red_cards": 0 },
-        { "number": 2, "name": "9B Player 2", "goals": 0, "assists": 0, "fouls": 0, "yellow_cards": 0, "red_cards": 0 },
-        { "number": 3, "name": "9B Player 3", "goals": 0, "assists": 0, "fouls": 0, "yellow_cards": 0, "red_cards": 0 },
-        { "number": 4, "name": "9B Player 4", "goals": 0, "assists": 0, "fouls": 0, "yellow_cards": 0, "red_cards": 0 },
-        { "number": 5, "name": "9B Player 5", "goals": 0, "assists": 0, "fouls": 0, "yellow_cards": 0, "red_cards": 0 },
-        { "number": 6, "name": "9B Player 6", "goals": 0, "assists": 0, "fouls": 0, "yellow_cards": 0, "red_cards": 0 },
-        { "number": 7, "name": "9B Player 7", "goals": 0, "assists": 0, "fouls": 0, "yellow_cards": 0, "red_cards": 0 },
-        { "number": 8, "name": "9B Player 8", "goals": 0, "assists": 0, "fouls": 0, "yellow_cards": 0, "red_cards": 0 },
-        { "number": 9, "name": "9B Player 9", "goals": 0, "assists": 0, "fouls": 0, "yellow_cards": 0, "red_cards": 0 },
-        { "number": 10, "name": "9B Player 10", "goals": 0, "assists": 0, "fouls": 0, "yellow_cards": 0, "red_cards": 0 },
-        { "number": 11, "name": "9B Player 11", "goals": 0, "assists": 0, "fouls": 0, "yellow_cards": 0, "red_cards": 0 }
+        {
+          "number": 1,
+          "name": "გიორგი ქავთარაძე",
+          "goals": 0,
+          "assists": 0,
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
+        },
+        {
+          "number": 2,
+          "name": "დემეტრე ჯაფარიძე",
+          "goals": 0,
+          "assists": 0,
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
+        },
+        {
+          "number": 3,
+          "name": "ნიკო ლომინაძე",
+          "goals": 0,
+          "assists": 0,
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
+        },
+        {
+          "number": 4,
+          "name": "გიორგი კობახიძე",
+          "goals": 0,
+          "assists": 0,
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
+        },
+        {
+          "number": 5,
+          "name": "ანდრია კაპანაძე",
+          "goals": 0,
+          "assists": 0,
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
+        }
+      ]
+    },
+    {
+      "id": "9c",
+      "name": "ფარშევანგები",
+      "played": 0,
+      "won": 0,
+      "drawn": 0,
+      "lost": 0,
+      "gf": 0,
+      "ga": 0,
+      "points": 0,
+      "players": [
+        {
+          "number": 1,
+          "name": "ნიკოლოზ ახვლედიანი",
+          "goals": 0,
+          "assists": 0,
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
+        },
+        {
+          "number": 2,
+          "name": "ნიკოლოზ გოგეშვილი",
+          "goals": 0,
+          "assists": 0,
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
+        },
+        {
+          "number": 3,
+          "name": "გიორგი ხოჩოლავა",
+          "goals": 0,
+          "assists": 0,
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
+        },
+        {
+          "number": 4,
+          "name": "ლუკა კასრაძე",
+          "goals": 0,
+          "assists": 0,
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
+        },
+        {
+          "number": 5,
+          "name": "დათუნა ბაკლიშვილი",
+          "goals": 0,
+          "assists": 0,
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
+        },
+        {
+          "number": 6,
+          "name": "ილია გოგავა",
+          "goals": 0,
+          "assists": 0,
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
+        }
+      ]
+    },
+    {
+      "id": "10c",
+      "name": "27",
+      "played": 0,
+      "won": 0,
+      "drawn": 0,
+      "lost": 0,
+      "gf": 0,
+      "ga": 0,
+      "points": 0,
+      "players": [
+        {
+          "number": 1,
+          "name": "დათი ქარქაშაძე",
+          "goals": 0,
+          "assists": 0,
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
+        },
+        {
+          "number": 2,
+          "name": "ალექსანდე მაქარაშვილი",
+          "goals": 0,
+          "assists": 0,
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
+        },
+        {
+          "number": 3,
+          "name": "ირაკლი ხუჯაძე",
+          "goals": 0,
+          "assists": 0,
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
+        },
+        {
+          "number": 4,
+          "name": "ანდრო მამაცაშვილი",
+          "goals": 0,
+          "assists": 0,
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
+        },
+        {
+          "number": 5,
+          "name": "ნოდარ დავიდი",
+          "goals": 0,
+          "assists": 0,
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
+        },
+        {
+          "number": 6,
+          "name": "ნიკოლოზ სტურუა",
+          "goals": 0,
+          "assists": 0,
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
+        }
+      ]
+    },
+    {
+      "id": "11a",
+      "name": "სამასი სამას ცხრა",
+      "played": 0,
+      "won": 0,
+      "drawn": 0,
+      "lost": 0,
+      "gf": 0,
+      "ga": 0,
+      "points": 0,
+      "players": [
+        {
+          "number": 1,
+          "name": "ნიკოლას ღუღნიშვილი",
+          "goals": 0,
+          "assists": 0,
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
+        },
+        {
+          "number": 2,
+          "name": "დავით ლობჟანიძე",
+          "goals": 0,
+          "assists": 0,
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
+        },
+        {
+          "number": 3,
+          "name": "დემეტრე მაღალაშვილი",
+          "goals": 0,
+          "assists": 0,
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
+        },
+        {
+          "number": 4,
+          "name": "ლუკა კვირიკაძე",
+          "goals": 0,
+          "assists": 0,
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
+        },
+        {
+          "number": 5,
+          "name": "ანდრია კუნელაური",
+          "goals": 0,
+          "assists": 0,
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
+        },
+        {
+          "number": 6,
+          "name": "დათა სუბელიანი",
+          "goals": 0,
+          "assists": 0,
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
+        }
+      ]
+    },
+    {
+      "id": "11b",
+      "name": "FC Gooners",
+      "played": 0,
+      "won": 0,
+      "drawn": 0,
+      "lost": 0,
+      "gf": 0,
+      "ga": 0,
+      "points": 0,
+      "players": [
+        {
+          "number": 1,
+          "name": "ნიკა თევდორაშვილი",
+          "goals": 0,
+          "assists": 0,
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
+        },
+        {
+          "number": 2,
+          "name": "იოანე ლეჟავა",
+          "goals": 0,
+          "assists": 0,
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
+        },
+        {
+          "number": 3,
+          "name": "მათე ძიძიგური",
+          "goals": 0,
+          "assists": 0,
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
+        },
+        {
+          "number": 4,
+          "name": "დემეტრე კაპანაძე",
+          "goals": 0,
+          "assists": 0,
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
+        },
+        {
+          "number": 5,
+          "name": "ალექსანდრე სულხანიშვილი",
+          "goals": 0,
+          "assists": 0,
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
+        },
+        {
+          "number": 6,
+          "name": "ნიკოლოზ ვაჩეიშვილი",
+          "goals": 0,
+          "assists": 0,
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
+        },
+        {
+          "number": 7,
+          "name": "ნიკოლოზ ჯოხაძე",
+          "goals": 0,
+          "assists": 0,
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
+        }
+      ]
+    },
+    {
+      "id": "11d",
+      "name": "Roini",
+      "played": 0,
+      "won": 0,
+      "drawn": 0,
+      "lost": 0,
+      "gf": 0,
+      "ga": 0,
+      "points": 0,
+      "players": [
+        {
+          "number": 1,
+          "name": "დავით მიქელაძე",
+          "goals": 0,
+          "assists": 0,
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
+        },
+        {
+          "number": 2,
+          "name": "საბა კახურაშვილი",
+          "goals": 0,
+          "assists": 0,
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
+        },
+        {
+          "number": 3,
+          "name": "მათე წიკლაური",
+          "goals": 0,
+          "assists": 0,
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
+        },
+        {
+          "number": 4,
+          "name": "ანდრია ტალახაძე",
+          "goals": 0,
+          "assists": 0,
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
+        },
+        {
+          "number": 5,
+          "name": "ნიკოლოზ წიკლაური",
+          "goals": 0,
+          "assists": 0,
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
+        },
+        {
+          "number": 6,
+          "name": "მიხეილ ზუბადალაშვილი",
+          "goals": 0,
+          "assists": 0,
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
+        },
+        {
+          "number": 7,
+          "name": "ნიკოლოზ ზარაფიშვილი",
+          "goals": 0,
+          "assists": 0,
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
+        }
+      ]
+    },
+    {
+      "id": "11e",
+      "name": "ბიზნესი",
+      "played": 0,
+      "won": 0,
+      "drawn": 0,
+      "lost": 0,
+      "gf": 0,
+      "ga": 0,
+      "points": 0,
+      "players": [
+        {
+          "number": 1,
+          "name": "გიორგი გიგაური",
+          "goals": 0,
+          "assists": 0,
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
+        },
+        {
+          "number": 2,
+          "name": "ანდრია გოგოხია",
+          "goals": 0,
+          "assists": 0,
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
+        },
+        {
+          "number": 3,
+          "name": "ნიკოლოზ ელიოზიშვილი",
+          "goals": 0,
+          "assists": 0,
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
+        },
+        {
+          "number": 4,
+          "name": "ნიკოლოზ ხვედელიძე",
+          "goals": 0,
+          "assists": 0,
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
+        },
+        {
+          "number": 5,
+          "name": "სერგი წილოსანი",
+          "goals": 0,
+          "assists": 0,
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
+        },
+        {
+          "number": 6,
+          "name": "ანდრია ყალიჩავა",
+          "goals": 0,
+          "assists": 0,
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
+        },
+        {
+          "number": 7,
+          "name": "ნიკოლოზ კობახიძე",
+          "goals": 0,
+          "assists": 0,
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
+        }
       ]
     },
     {
       "id": "11c",
-      "name": "11C",
+      "name": "Logositi",
       "played": 0,
       "won": 0,
       "drawn": 0,
@@ -59,22 +565,101 @@
       "ga": 0,
       "points": 0,
       "players": [
-        { "number": 1, "name": "11C Player 1", "goals": 0, "assists": 0, "fouls": 0, "yellow_cards": 0, "red_cards": 0 },
-        { "number": 2, "name": "11C Player 2", "goals": 0, "assists": 0, "fouls": 0, "yellow_cards": 0, "red_cards": 0 },
-        { "number": 3, "name": "11C Player 3", "goals": 0, "assists": 0, "fouls": 0, "yellow_cards": 0, "red_cards": 0 },
-        { "number": 4, "name": "11C Player 4", "goals": 0, "assists": 0, "fouls": 0, "yellow_cards": 0, "red_cards": 0 },
-        { "number": 5, "name": "11C Player 5", "goals": 0, "assists": 0, "fouls": 0, "yellow_cards": 0, "red_cards": 0 },
-        { "number": 6, "name": "11C Player 6", "goals": 0, "assists": 0, "fouls": 0, "yellow_cards": 0, "red_cards": 0 },
-        { "number": 7, "name": "11C Player 7", "goals": 0, "assists": 0, "fouls": 0, "yellow_cards": 0, "red_cards": 0 },
-        { "number": 8, "name": "11C Player 8", "goals": 0, "assists": 0, "fouls": 0, "yellow_cards": 0, "red_cards": 0 },
-        { "number": 9, "name": "11C Player 9", "goals": 0, "assists": 0, "fouls": 0, "yellow_cards": 0, "red_cards": 0 },
-        { "number": 10, "name": "11C Player 10", "goals": 0, "assists": 0, "fouls": 0, "yellow_cards": 0, "red_cards": 0 },
-        { "number": 11, "name": "11C Player 11", "goals": 0, "assists": 0, "fouls": 0, "yellow_cards": 0, "red_cards": 0 }
+        {
+          "number": 1,
+          "name": "თორნიკე ანთაძე",
+          "goals": 0,
+          "assists": 0,
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
+        },
+        {
+          "number": 2,
+          "name": "საბა ჯიქია",
+          "goals": 0,
+          "assists": 0,
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
+        },
+        {
+          "number": 3,
+          "name": "ლევან გაჩეჩილაძე",
+          "goals": 0,
+          "assists": 0,
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
+        },
+        {
+          "number": 4,
+          "name": "ანდრია ძაძამია",
+          "goals": 0,
+          "assists": 0,
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
+        },
+        {
+          "number": 5,
+          "name": "ილია კახიანი",
+          "goals": 0,
+          "assists": 0,
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
+        },
+        {
+          "number": 6,
+          "name": "გიორგი ტალახაძე",
+          "goals": 0,
+          "assists": 0,
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
+        },
+        {
+          "number": 7,
+          "name": "ნიკოლოზ თეოდორაძე",
+          "goals": 0,
+          "assists": 0,
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
+        },
+        {
+          "number": 8,
+          "name": "ნიკო გოგიბერიძე",
+          "goals": 0,
+          "assists": 0,
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
+        },
+        {
+          "number": 9,
+          "name": "დავით თვალჭრელიძე",
+          "goals": 0,
+          "assists": 0,
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
+        },
+        {
+          "number": 10,
+          "name": "დათი გამცემლიძე",
+          "goals": 0,
+          "assists": 0,
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
+        }
       ]
     },
     {
-      "id": "12b",
-      "name": "12B",
+      "id": "12a",
+      "name": "Korbendalasi",
       "played": 0,
       "won": 0,
       "drawn": 0,
@@ -83,17 +668,60 @@
       "ga": 0,
       "points": 0,
       "players": [
-        { "number": 1, "name": "12B Player 1", "goals": 0, "assists": 0, "fouls": 0, "yellow_cards": 0, "red_cards": 0 },
-        { "number": 2, "name": "12B Player 2", "goals": 0, "assists": 0, "fouls": 0, "yellow_cards": 0, "red_cards": 0 },
-        { "number": 3, "name": "12B Player 3", "goals": 0, "assists": 0, "fouls": 0, "yellow_cards": 0, "red_cards": 0 },
-        { "number": 4, "name": "12B Player 4", "goals": 0, "assists": 0, "fouls": 0, "yellow_cards": 0, "red_cards": 0 },
-        { "number": 5, "name": "12B Player 5", "goals": 0, "assists": 0, "fouls": 0, "yellow_cards": 0, "red_cards": 0 },
-        { "number": 6, "name": "12B Player 6", "goals": 0, "assists": 0, "fouls": 0, "yellow_cards": 0, "red_cards": 0 },
-        { "number": 7, "name": "12B Player 7", "goals": 0, "assists": 0, "fouls": 0, "yellow_cards": 0, "red_cards": 0 },
-        { "number": 8, "name": "12B Player 8", "goals": 0, "assists": 0, "fouls": 0, "yellow_cards": 0, "red_cards": 0 },
-        { "number": 9, "name": "12B Player 9", "goals": 0, "assists": 0, "fouls": 0, "yellow_cards": 0, "red_cards": 0 },
-        { "number": 10, "name": "12B Player 10", "goals": 0, "assists": 0, "fouls": 0, "yellow_cards": 0, "red_cards": 0 },
-        { "number": 11, "name": "12B Player 11", "goals": 0, "assists": 0, "fouls": 0, "yellow_cards": 0, "red_cards": 0 }
+        {
+          "number": 1,
+          "name": "ნიკოლოზ ხიზანიშვილი",
+          "goals": 0,
+          "assists": 0,
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
+        },
+        {
+          "number": 2,
+          "name": "დიმიტრი ორახელაშვილი",
+          "goals": 0,
+          "assists": 0,
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
+        },
+        {
+          "number": 3,
+          "name": "დავით მაცაბერიძე",
+          "goals": 0,
+          "assists": 0,
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
+        },
+        {
+          "number": 4,
+          "name": "ნიკოლოზ ძაძამია",
+          "goals": 0,
+          "assists": 0,
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
+        },
+        {
+          "number": 5,
+          "name": "ოთარ ნოღაიდელი",
+          "goals": 0,
+          "assists": 0,
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
+        },
+        {
+          "number": 6,
+          "name": "გიორგი თავაძე",
+          "goals": 0,
+          "assists": 0,
+          "fouls": 0,
+          "yellow_cards": 0,
+          "red_cards": 0
+        }
       ]
     }
   ]

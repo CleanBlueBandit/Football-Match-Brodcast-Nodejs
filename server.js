@@ -17,6 +17,10 @@ const matchRoutes = require('./routes/matches');
 
 const PgSession = pgSessionFactory(session);
 
+
+const hash = await bcrypt.hash("password124!");
+console.log(hash);
+
 const app = express();
 const server = http.createServer(app);
 
