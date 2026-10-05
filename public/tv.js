@@ -90,7 +90,9 @@
         pos: i + 1,
         team: r.name,
         p: r.played,
+        gd: r.gf - r.ga,
         pts: r.points,
+        live: !!r.live,
       })),
       overlays: {
         goal: {
@@ -411,7 +413,7 @@
       const tBody = document.getElementById('table-body');
       if (tBody && state.table) {
         tBody.innerHTML = state.table
-          .map((r) => `<tr><td>${r.pos}</td><td>${String(r.team).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]))}</td><td>${r.p}</td><td>${r.pts}</td></tr>`)
+          .map((r) => `<tr class="${r.live ? 'table-live' : ''}"><td>${r.pos}</td><td>${String(r.team).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]))}</td><td>${r.p}</td><td>${r.gd > 0 ? '+' : ''}${r.gd}</td><td>${r.pts}</td></tr>`)
           .join('');
       }
       t.classList.add('active');

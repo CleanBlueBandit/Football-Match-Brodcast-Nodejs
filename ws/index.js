@@ -2,6 +2,7 @@ const { WebSocketServer, WebSocket } = require('ws');
 const { prisma } = require('../db/prisma');
 const { canRunCommand, isRole } = require('../lib/roles');
 const { finishLiveMatch } = require('../lib/matches');
+const { standingFor } = require('../lib/leagueTotals');
 
 let state = null;
 let wss = null;
@@ -177,20 +178,33 @@ function buildTable() {
     const table = state.teams.map((team) => ({
         id: team.id,
         name: team.name,
-        ...zeroTeamStats(),
+        played: team.played || 0,
+        won: team.won || 0,
+        drawn: team.drawn || 0,
+        lost: team.lost || 0,
+        gf: team.gf || 0,
+        ga: team.ga || 0,
+        points: team.points || 0,
+        live: false,
     }));
 
-    for (const team of state.teams) {
-        const existing = table.find((entry) => entry.id === team.id);
-        if (!existing) continue;
-
-        existing.played = team.played || 0;
-        existing.won = team.won || 0;
-        existing.drawn = team.drawn || 0;
-        existing.lost = team.lost || 0;
-        existing.gf = team.gf || 0;
-        existing.ga = team.ga || 0;
-        existing.points = team.points || 0;
+    // "Live" table: while a match is on, the two teams are shown as if it ended
+    // with the current score. The database is only changed when the match is
+    // really finished, so nothing is counted twice.
+    const { matchId, homeTeam, awayTeam, homeScore, awayScore } = state.match;
+    if (matchId) {
+        for (const [teamId, gf, ga] of [
+            [homeTeam, homeScore, awayScore],
+            [awayTeam, awayScore, homeScore],
+        ]) {
+            const row = table.find((entry) => entry.id === teamId);
+            if (!row) continue;
+            const add = standingFor(gf, ga);
+            for (const key of ['played', 'won', 'drawn', 'lost', 'gf', 'ga', 'points']) {
+                row[key] += add[key];
+            }
+            row.live = true;
+        }
     }
 
     return table.sort((a, b) => {
@@ -203,7 +217,9 @@ function buildTable() {
             return goalDifferenceB - goalDifferenceA;
         }
 
-        return b.gf - a.gf;
+        if (b.gf !== a.gf) return b.gf - a.gf;
+
+        return a.name.localeCompare(b.name);
     });
 }
 
@@ -605,7 +621,15 @@ async function handleCommand(command, role, ws) {
 
             if (!player) return;
 
-            applyPlayerStat(player, stat, Number(command.amount) || 1);
+            const amount = Number(command.amount) || 1;
+            applyPlayerStat(player, stat, amount);
+
+            // A card is also a foul. This only happens here, when the broadcaster
+            // gives the card; the statistician's corrections (adjustPlayerStat)
+            // change exactly the number they touch and nothing else.
+            if ((stat === 'yellowCards' || stat === 'redCards') && amount > 0) {
+                applyPlayerStat(player, 'fouls', amount);
+            }
 
             broadcast();
             break;

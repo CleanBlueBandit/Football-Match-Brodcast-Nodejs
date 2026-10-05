@@ -1048,9 +1048,6 @@ function updateToggleButtons() {
     possession: 'btn-possession',
     fouls: 'btn-fouls',
     table: 'btn-table',
-    formations: 'btn-formations',
-    var: 'btn-var',
-    replay: 'btn-replay',
   };
 
   Object.entries(map).forEach(
