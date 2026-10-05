@@ -191,6 +191,26 @@
     });
   }
 
+  // Shrink club names until both fit their scorebug column (never wraps/overlaps the timer).
+  // Both names share one font size so the bug stays visually balanced.
+  function fitScorebugNames() {
+    const els = ['sb-home-name', 'sb-away-name'].map((id) => document.getElementById(id));
+    els.forEach((el) => { el.style.fontSize = ''; });
+    const base = parseFloat(getComputedStyle(els[0]).fontSize);
+    let size = base;
+    const min = 10;
+    els.forEach((el) => {
+      el.style.fontSize = size + 'px';
+      while (el.scrollWidth > el.clientWidth && size > min) {
+        size -= 1;
+        el.style.fontSize = size + 'px';
+      }
+    });
+    if (size < base) els.forEach((el) => { el.style.fontSize = size + 'px'; });
+    else els.forEach((el) => { el.style.fontSize = ''; });
+  }
+  window.addEventListener('resize', () => { if (state && state.status === 'live') fitScorebugNames(); });
+
   function renderTV() {
     // No live match: show the "match will begin soon" card, hide the broadcast.
     const live = state.status === 'live';
@@ -247,6 +267,8 @@
       homeScoreEl.classList.remove('scorebug-score-big');
       awayScoreEl.classList.remove('scorebug-score-big');
     }
+
+    fitScorebugNames();
 
     const addEl = document.getElementById('sb-added');
     const externalTimeEl = document.getElementById('external-time');
