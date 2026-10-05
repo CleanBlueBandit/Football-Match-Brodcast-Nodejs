@@ -11,6 +11,7 @@ let graphicTimer = null;
 let refCallTimer = null;
 let overlayTimer = null; // kept out of `state`: a Timeout object can't be JSON-serialised
 let finishing = false;
+let commandQueue = Promise.resolve();
 
 // Per-player numbers tracked during the live match (in memory only; they are
 // written to the database once, by finishLiveMatch, when the match ends).
@@ -29,6 +30,8 @@ const DEFAULT_STATE = {
         awayScore: 0,
         homePossession: 50,
         awayPossession: 50,
+        homeFouls: 0,
+        awayFouls: 0,
         timer: 0,
         running: false,
         startedAt: null,
@@ -211,7 +214,8 @@ function publicState() {
     };
 }
 
-function broadcast() {
+function broadcast(persist = true) {
+    if (persist) persistSoon();
     if (!wss) return;
 
     const msg = JSON.stringify({
@@ -283,12 +287,112 @@ async function releaseLiveMatch(matchId) {
     }
 }
 
+
+function clampInt(value, min, max) {
+    return Math.min(max, Math.max(min, Math.trunc(value)));
+}
+
+function teamExists(id) {
+    return state.teams.some((t) => t.id === id);
+}
+
+// Changes one of a player's live numbers. A player foul is also a team foul
+// (same rule the statistician's editor uses).
+function applyPlayerStat(player, stat, delta) {
+    const before = player[stat] || 0;
+    player[stat] = Math.max(0, before + delta);
+
+    if (stat === 'fouls' && player[stat] !== before) {
+        const key = player.teamId === state.match.homeTeam ? 'homeFouls' : 'awayFouls';
+        state.match[key] = Math.max(0, (state.match[key] || 0) + (player[stat] - before));
+    }
+}
+
+// A 'live' row nobody is running any more (the server restarted without a saved
+// state, or a start failed half way) goes back to being a fixture / is removed.
+async function releaseOrphanedLiveMatches() {
+    const orphans = await prisma.match.findMany({ where: { status: 'live' }, select: { id: true } });
+    for (const { id } of orphans) await releaseLiveMatch(id);
+}
+
+
+// ---- Surviving a restart ----
+// The live match (score, clock, per-player numbers) only exists in memory. It is
+// copied into app_state so that a restart (nodemon, a deploy, a crash) picks the
+// match up where it was instead of making it disappear.
+let persistTimer = null;
+
+function persistSoon() {
+    if (persistTimer || !state) return;
+    persistTimer = setTimeout(() => {
+        persistTimer = null;
+        persistState().catch((error) => console.error('Failed to save live state:', error));
+    }, 1500);
+}
+
+async function persistState() {
+    if (!state) return;
+    const data = state.match.matchId
+        ? { match: state.match, goalHistory: state.goalHistory, players: state.players }
+        : { match: null };
+
+    await prisma.appState.upsert({
+        where: { id: 1 },
+        update: { data, updatedAt: new Date() },
+        create: { id: 1, data },
+    });
+}
+
+async function flushState() {
+    if (persistTimer) {
+        clearTimeout(persistTimer);
+        persistTimer = null;
+    }
+    await persistState().catch((error) => console.error('Failed to save live state:', error));
+}
+
+// Puts a saved live match back, but only if its database row is still 'live'.
+async function restoreLiveMatch() {
+    let saved = null;
+    try {
+        const row = await prisma.appState.findUnique({ where: { id: 1 } });
+        saved = row?.data?.match ? row.data : null;
+    } catch (error) {
+        console.error('Could not read saved live state:', error);
+    }
+
+    const matchId = saved?.match?.matchId;
+    const row = matchId ? await prisma.match.findUnique({ where: { id: matchId } }) : null;
+
+    if (!row || row.status !== 'live' || !teamExists(row.homeTeamId) || !teamExists(row.awayTeamId)) {
+        // Nothing valid to resume: give back every stray 'live' row.
+        await releaseOrphanedLiveMatches();
+        return;
+    }
+
+    state.match = { ...DEFAULT_STATE.match, ...saved.match, matchId: row.id };
+    state.goalHistory = Array.isArray(saved.goalHistory) ? saved.goalHistory : [];
+
+    const byId = new Map((saved.players || []).map((p) => [p.id, p]));
+    for (const player of state.players) {
+        const old = byId.get(player.id);
+        if (old) for (const key of LIVE_STATS) player[key] = Number(old[key]) || 0;
+    }
+
+    // Any other 'live' rows are strays.
+    const others = await prisma.match.findMany({
+        where: { status: 'live', id: { not: row.id } },
+        select: { id: true },
+    });
+    for (const { id } of others) await releaseLiveMatch(id);
+
+    console.log(`Resumed live match #${row.id} after restart.`);
+}
+
 // The shape lib/matches.js finishLiveMatch() expects.
 function buildLiveState() {
     const { homeTeam, awayTeam } = state.match;
     const playerStats = { home: {}, away: {} };
-    let homeFouls = 0;
-    let awayFouls = 0;
 
     for (const player of state.players) {
         const side = player.teamId === homeTeam ? 'home' : player.teamId === awayTeam ? 'away' : null;
@@ -303,9 +407,6 @@ function buildLiveState() {
             yellow_cards: player.yellowCards || 0,
             red_cards: player.redCards || 0,
         };
-
-        if (side === 'home') homeFouls += player.fouls || 0;
-        else awayFouls += player.fouls || 0;
     }
 
     return {
@@ -313,8 +414,8 @@ function buildLiveState() {
         match: {
             homeScore: state.match.homeScore,
             awayScore: state.match.awayScore,
-            homeFouls,
-            awayFouls,
+            homeFouls: state.match.homeFouls || 0,
+            awayFouls: state.match.awayFouls || 0,
             homePossession: state.match.homePossession ?? 50,
             awayPossession: state.match.awayPossession ?? 50,
         },
@@ -350,23 +451,26 @@ async function handleCommand(command, role, ws) {
                 return;
             }
 
-            if (
-                !state.teams.some((t) => t.id === homeId) ||
-                !state.teams.some((t) => t.id === awayId)
-            ) {
-                reply(ws, { type: 'error', message: 'Unknown team.' });
+            // One live match at a time. The server is the judge of this, not the
+            // control page: a second start is refused until the first one is ended.
+            if (state.match.matchId) {
+                reply(ws, {
+                    type: 'error',
+                    message: 'A match is already live. End it before starting another.',
+                });
                 return;
             }
 
-            // Whatever was live before is abandoned (nothing is recorded for it).
-            await releaseLiveMatch(state.match.matchId);
-            state.match.matchId = null;
+            // Memory says nothing is live, so any 'live' row left in the database
+            // is an orphan (e.g. from a crash). Give those back before starting.
+            await releaseOrphanedLiveMatches();
 
-            // Start an existing fixture, or create a match row on the spot.
+            // Validate everything BEFORE touching the database or the state.
             let row;
             const fixtureId = Number(command.matchId);
+            const isFixture = Number.isInteger(fixtureId) && fixtureId > 0;
 
-            if (Number.isInteger(fixtureId) && fixtureId > 0) {
+            if (isFixture) {
                 const fixture = await prisma.match.findUnique({ where: { id: fixtureId } });
 
                 if (!fixture || fixture.status !== 'scheduled') {
@@ -374,11 +478,30 @@ async function handleCommand(command, role, ws) {
                     return;
                 }
 
-                row = await prisma.match.update({
-                    where: { id: fixtureId },
+                // A fixture decides its own teams.
+                if (!teamExists(fixture.homeTeamId) || !teamExists(fixture.awayTeamId)) {
+                    reply(ws, { type: 'error', message: 'Unknown team.' });
+                    return;
+                }
+
+                // Only succeeds if it is still 'scheduled' (guards against two clients).
+                const { count } = await prisma.match.updateMany({
+                    where: { id: fixtureId, status: 'scheduled' },
                     data: { status: 'live', startedAt: new Date(), updatedAt: new Date() },
                 });
+
+                if (!count) {
+                    reply(ws, { type: 'error', message: 'That fixture is not available to start.' });
+                    return;
+                }
+
+                row = await prisma.match.findUnique({ where: { id: fixtureId } });
             } else {
+                if (!teamExists(homeId) || !teamExists(awayId)) {
+                    reply(ws, { type: 'error', message: 'Unknown team.' });
+                    return;
+                }
+
                 row = await prisma.match.create({
                     data: {
                         homeTeamId: homeId,
@@ -392,17 +515,9 @@ async function handleCommand(command, role, ws) {
             clearMatchState();
 
             state.match = {
-                ...state.match,
-                // A fixture decides its own teams.
+                ...DEFAULT_STATE.match,
                 homeTeam: row.homeTeamId,
                 awayTeam: row.awayTeamId,
-                homeScore: 0,
-                awayScore: 0,
-                homePossession: 50,
-                awayPossession: 50,
-                timer: 0,
-                running: false,
-                startedAt: null,
                 matchId: row.id,
             };
 
@@ -489,11 +604,81 @@ async function handleCommand(command, role, ws) {
 
             if (!player) return;
 
-            player[stat] = Math.max(
-                0,
-                (player[stat] || 0) + (Number(command.amount) || 1)
-            );
+            applyPlayerStat(player, stat, Number(command.amount) || 1);
 
+            broadcast();
+            break;
+        }
+
+        // ---- Statistician (live match) ----
+        // Everything below needs a live match; the statistician's page is only
+        // useful while one is running.
+
+        case 'modScore': {
+            if (!state.match.matchId) return;
+
+            const side = command.team === 'away' ? 'away' : 'home';
+            const scoreKey = side === 'home' ? 'homeScore' : 'awayScore';
+            const delta = Math.trunc(Number(command.delta)) || 0;
+            if (!delta) return;
+
+            const before = state.match[scoreKey];
+            state.match[scoreKey] = clampInt(before + delta, 0, 999);
+
+            // Taking a goal away also takes the latest one of that side off the
+            // goal list and the scorer's tally, so the three never disagree.
+            if (state.match[scoreKey] < before) {
+                const idx = state.goalHistory.map((g) => g.side).lastIndexOf(side);
+                if (idx !== -1) {
+                    const [removed] = state.goalHistory.splice(idx, 1);
+                    const scorer = removed.playerId && state.players.find((p) => p.id === removed.playerId);
+                    if (scorer) scorer.goals = Math.max(0, (scorer.goals || 0) - 1);
+                }
+            }
+
+            broadcast();
+            break;
+        }
+
+        case 'setTeamStat': {
+            if (!state.match.matchId) return;
+            if (!['homeFouls', 'awayFouls'].includes(command.field)) return;
+
+            const value = Number(command.value);
+            if (!Number.isFinite(value)) return;
+
+            state.match[command.field] = clampInt(value, 0, 999);
+            broadcast();
+            break;
+        }
+
+        case 'updatePossession': {
+            if (!state.match.matchId) return;
+
+            const home = Number(command.home);
+            if (!Number.isFinite(home)) return;
+
+            state.match.homePossession = clampInt(home, 0, 100);
+            state.match.awayPossession = 100 - state.match.homePossession;
+            broadcast();
+            break;
+        }
+
+        case 'adjustPlayerStat': {
+            if (!state.match.matchId) return;
+
+            const teamId = command.team === 'away' ? state.match.awayTeam : state.match.homeTeam;
+            const stat = STAT_ALIASES[command.field] || command.field;
+            const delta = Math.trunc(Number(command.delta)) || 0;
+
+            if (!delta || !LIVE_STATS.includes(stat)) return;
+
+            const player = state.players.find(
+                (p) => p.teamId === teamId && String(p.number) === String(command.number)
+            );
+            if (!player) return;
+
+            applyPlayerStat(player, stat, delta);
             broadcast();
             break;
         }
@@ -607,7 +792,11 @@ async function handleCommand(command, role, ws) {
             const matchId = state.match.matchId;
 
             // Nothing live (e.g. a double click), or already being saved.
-            if (!matchId || finishing) return;
+            if (finishing) return;
+            if (!matchId) {
+                reply(ws, { type: 'error', message: 'There is no live match to end.' });
+                return;
+            }
             finishing = true;
 
             // The panel's "Record result and player stats" checkbox; saving is the default.
@@ -655,7 +844,7 @@ function startTimerBroadcast() {
             Math.floor((Date.now() - state.match.startedAt) / 1000)
         );
 
-        broadcast();
+        broadcast(false);
     }, 1000);
 }
 
@@ -664,9 +853,9 @@ async function setupWebSocket(server, sessionMiddleware) {
 
     await loadLeague();
 
-    // A restart loses the in-memory live state; give back any match left 'live'.
-    const orphans = await prisma.match.findMany({ where: { status: 'live' }, select: { id: true } });
-    for (const { id } of orphans) await releaseLiveMatch(id);
+    // A restart loses the in-memory live state: resume the saved match if there
+    // is one, otherwise give back any match left 'live'.
+    await restoreLiveMatch();
 
     wss = new WebSocketServer({
         server,
@@ -692,15 +881,21 @@ async function setupWebSocket(server, sessionMiddleware) {
             })
         );
 
-        ws.on('message', async (raw) => {
-            try {
-                const command = JSON.parse(raw.toString());
-                const role = await rolePromise;
+        ws.on('message', (raw) => {
+            // One command at a time, in arrival order. Several of them wait on the
+            // database, and two overlapping 'set-match' commands could otherwise
+            // both pass the "nothing is live" check.
+            commandQueue = commandQueue.then(async () => {
+                try {
+                    const command = JSON.parse(raw.toString());
+                    const role = await rolePromise;
 
-                await handleCommand(command, role, ws);
-            } catch (error) {
-                console.error('WebSocket message error:', error);
-            }
+                    await handleCommand(command, role, ws);
+                } catch (error) {
+                    console.error('WebSocket message error:', error);
+                    reply(ws, { type: 'error', message: 'The server could not run that command.' });
+                }
+            });
         });
     });
 
@@ -725,4 +920,5 @@ module.exports = {
     setupWebSocket,
     getMatchState,
     broadcast,
+    flushState,
 };

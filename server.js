@@ -7,7 +7,7 @@ const session = require('express-session');
 const pgSessionFactory = require('connect-pg-simple');
 
 const { prisma, pool } = require('./db/prisma');
-const { setupWebSocket } = require('./ws');
+const { setupWebSocket, flushState } = require('./ws');
 const { importStandings } = require('./db/importStandings');
 const { requirePermission, isLoggedIn } = require('./middleware/auth');
 const { homeFor } = require('./lib/roles');
@@ -76,21 +76,32 @@ app.use(express.static(path.join(__dirname, 'public'), { index: false }));
 const PORT = process.env.PORT || 3000;
 
 async function start() {
-
-  setupWebSocket(server, sessionMiddleware);
+  // Get the league + any live match ready BEFORE accepting connections. Listening
+  // first left a window where /ws had no handler, so a page reconnecting after a
+  // restart was dropped, and a failure here was an unhandled rejection.
+  await setupWebSocket(server, sessionMiddleware);
   server.listen(PORT, () => {
     console.log(`Broadcast control server listening on port ${PORT}`);
   });
 }
 
-start();
+start().catch((error) => {
+  console.error('Failed to start:', error);
+  process.exit(1);
+});
 
 async function shutdown() {
   console.log("Server shutting down...");
+  await flushState(); // keep the live match so it survives the restart
   server.close();
   await prisma.$disconnect().catch(() => {});
   await pool.end().catch(() => {});
   process.exit(0);
 }
 process.on('SIGTERM', shutdown);
+// nodemon restarts with SIGUSR2: save the live match, then let it carry on.
+process.once('SIGUSR2', async () => {
+  await flushState();
+  process.kill(process.pid, 'SIGUSR2');
+});
 process.on('SIGINT', shutdown);

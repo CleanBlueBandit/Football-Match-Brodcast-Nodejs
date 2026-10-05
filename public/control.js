@@ -55,10 +55,14 @@ function setWsStatus(status) {
   el.className = `ws-status ${status}`;
 }
 
+// Returns true if the command was sent. A command that cannot be sent is
+// reported instead of silently dropped, so the panel never looks like it did
+// something (e.g. started a match) when the server never heard about it.
 function send(action, payload = {}) {
   if (!socket || socket.readyState !== WebSocket.OPEN) {
     console.error('WebSocket is not open:', socket?.readyState);
-    return;
+    alert('Not connected to the broadcast server. Wait for the "live" badge, then try again.');
+    return false;
   }
 
   const message = {
@@ -70,6 +74,7 @@ function send(action, payload = {}) {
   console.log('Sending:', message);
 
   socket.send(JSON.stringify(message));
+  return true;
 }
 
 // ---- Helpers ----
@@ -115,13 +120,10 @@ function getTeamName(teamId) {
   return getTeam(teamId)?.name || '';
 }
 
+// A match is live only when the SERVER says so (it has a recorded live match),
+// not merely because two teams were picked in this page.
 function isMatchLive() {
-  return !!(
-    state &&
-    state.match &&
-    state.match.homeTeam &&
-    state.match.awayTeam
-  );
+  return !!(state && state.match && state.match.matchId);
 }
 
 // ---- Match control ----
@@ -611,6 +613,11 @@ window.quickRefCall = function (call) {
 window.startScheduled = function (matchId) {
   document.getElementById('start-error').hidden = true;
 
+  if (!socket || socket.readyState !== WebSocket.OPEN) {
+    alert('Not connected to the broadcast server. Wait for the "live" badge, then try again.');
+    return;
+  }
+
   /*
    * The current WebSocket server does NOT have a "startMatch"
    * command or a scheduled-match command.
@@ -1008,6 +1015,17 @@ function updateScoreDisplay() {
     away.textContent =
       state.match.awayScore;
   }
+
+  // Set by the statistician; shown here read-only.
+  const stats = {
+    'ctrl-possession': `${state.match.homePossession ?? 50}% - ${state.match.awayPossession ?? 50}%`,
+    'ctrl-fouls': `${state.match.homeFouls || 0} - ${state.match.awayFouls || 0}`,
+  };
+
+  Object.entries(stats).forEach(([id, text]) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = text;
+  });
 }
 
 function updateToggleButtons() {

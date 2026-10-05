@@ -51,7 +51,7 @@
 
     // A match is on screen once two teams are chosen (the final score stays
     // up after "End Match", same rule the control panel uses).
-    const live = !!(m.homeTeam && m.awayTeam);
+    const live = !!(m.matchId && m.homeTeam && m.awayTeam);
 
     const ov = s.overlay || {};
     const on = (type) => !!(ov.visible && ov.type === type);
@@ -72,8 +72,8 @@
         awayScore: m.awayScore || 0,
         homePossession: m.homePossession ?? 50,
         awayPossession: m.awayPossession ?? 50,
-        homeFouls: sum(side(m.homeTeam), 'fouls'),
-        awayFouls: sum(side(m.awayTeam), 'fouls'),
+        homeFouls: m.homeFouls ?? sum(side(m.homeTeam), 'fouls'),
+        awayFouls: m.awayFouls ?? sum(side(m.awayTeam), 'fouls'),
         homeFormation: m.homeFormation || '4-3-3',
         awayFormation: m.awayFormation || '4-3-3',
         time: m.timer || 0,

@@ -92,7 +92,7 @@ function connectWebSocket() {
   socket.addEventListener('message', (event) => {
     const msg = JSON.parse(event.data);
     if (msg.type === 'state') {
-      state = msg.state;
+      state = adaptState(msg.state);
       renderLive();
       const key = `${state.status}:${state.currentMatch?.matchId ?? ''}`;
       if (key !== liveKey) {
@@ -101,8 +101,54 @@ function connectWebSocket() {
       }
     } else if (msg.type === 'rejected') {
       alert('You do not have permission to do that.');
+    } else if (msg.type === 'error') {
+      alert(msg.message || 'Something went wrong.');
     }
   });
+}
+
+// The server (ws/index.js) sends one flat state shared with the TV and the control
+// panel: team ids, a flat players list, per-player numbers on the player. This page
+// was written for a different shape, so convert it here (same approach as tv.js).
+function adaptState(s) {
+  const m = s.match || {};
+  const teams = s.teams || [];
+  const nameOf = (id) => (teams.find((t) => t.id === id) || {}).name || id || '';
+  const live = !!m.matchId;
+  const players = { home: [], away: [] };
+  const playerStats = { home: {}, away: {} };
+
+  for (const [side, teamId] of [['home', m.homeTeam], ['away', m.awayTeam]]) {
+    for (const p of (s.players || []).filter((x) => x.teamId === teamId).sort((a, b) => a.number - b.number)) {
+      players[side].push({ number: p.number, name: p.name });
+      playerStats[side][String(p.number)] = {
+        goals: p.goals || 0,
+        assists: p.assists || 0,
+        fouls: p.fouls || 0,
+        yellow_cards: p.yellowCards || 0,
+        red_cards: p.redCards || 0,
+      };
+    }
+  }
+
+  return {
+    status: live ? 'live' : 'waiting',
+    currentMatch: { matchId: m.matchId ?? null },
+    match: {
+      homeTeam: nameOf(m.homeTeam),
+      awayTeam: nameOf(m.awayTeam),
+      homeScore: m.homeScore || 0,
+      awayScore: m.awayScore || 0,
+      homeFouls: m.homeFouls || 0,
+      awayFouls: m.awayFouls || 0,
+      homePossession: m.homePossession ?? 50,
+      awayPossession: m.awayPossession ?? 50,
+      time: m.timer || 0,
+      isRunning: !!m.running,
+    },
+    players,
+    playerStats,
+  };
 }
 
 function setWsStatus(status) {
@@ -113,7 +159,10 @@ function setWsStatus(status) {
 }
 
 function send(action, payload = {}) {
-  if (!socket || socket.readyState !== WebSocket.OPEN) return;
+  if (!socket || socket.readyState !== WebSocket.OPEN) {
+    alert('Not connected to the server. Wait for the "live" badge, then try again.');
+    return;
+  }
   socket.send(JSON.stringify({ type: 'command', action, ...payload }));
 }
 
