@@ -45,3 +45,39 @@ input[type="datetime-local"] {
 }
 
 .form-ok { color: var(--success); font-size: 13px; margin: 0 0 1rem; }
+
+/* ---- Player stat grid: column titles on top, one colour per stat ---- */
+.stats-columns.stacked { grid-template-columns: 1fr; gap: 1.75rem; }
+.stats-columns.stacked h3 { font-size: 16px; }
+#stats-page .stat-list { max-height: 480px; overflow: auto; border: 1px solid var(--border); border-radius: var(--radius); }
+.sg-row {
+  display: grid; grid-template-columns: minmax(170px, 1.7fr) repeat(5, minmax(112px, 1fr));
+  min-width: 720px; align-items: stretch; border-bottom: 1px solid var(--border); font-size: 14px;
+}
+.sg-row:last-child { border-bottom: 0; }
+.sg-row:not(.sg-head):hover { background: rgba(255, 255, 255, 0.03); }
+.sg-name { padding: 8px 12px; align-self: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sg-name b { color: var(--muted); font-variant-numeric: tabular-nums; display: inline-block; min-width: 24px; }
+.sg-head { position: sticky; top: 0; z-index: 1; background: var(--surface); border-bottom: 1px solid var(--border2); }
+.sg-head .sg-name { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 700; }
+.sg-col {
+  padding: 10px 6px 8px; text-align: center; font-size: 13px; font-weight: 700; line-height: 1.2;
+  color: var(--c); border-bottom: 3px solid var(--c); background: color-mix(in srgb, var(--c) 14%, var(--surface));
+}
+.sg-cell {
+  display: flex; align-items: center; justify-content: center; gap: 8px; padding: 6px 4px;
+  background: color-mix(in srgb, var(--c) 7%, transparent);
+}
+.sg-cell .val { min-width: 26px; text-align: center; font-size: 17px; font-weight: 800; font-variant-numeric: tabular-nums; color: var(--c); }
+.sg-cell .val.zero { opacity: 0.4; }
+.sg-cell button {
+  width: 30px; height: 30px; padding: 0; font-size: 16px; line-height: 1;
+  background: var(--surface2); border: 1px solid var(--border2); color: var(--text); border-radius: 6px; cursor: pointer;
+}
+.sg-cell button:hover { border-color: var(--c); color: var(--c); }
+.sg-cell button:active { background: color-mix(in srgb, var(--c) 25%, var(--surface2)); }
+.col-goals { --c: #2fbf71; }
+.col-assists { --c: #4da3ff; }
+.col-fouls { --c: #f2f2f2; }
+.col-yellow_cards { --c: #ffcc00; }
+.col-red_cards { --c: #e63946; }

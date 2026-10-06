@@ -59,8 +59,8 @@
         </div>
 
         <h2 class="sub-h">Player Stats</h2>
-        <p class="hint">Goals, assists and cards are added automatically by the broadcaster's Goal and Card events. A card also counts as a foul. Use +/- here to record other fouls or fix a mistake. A foul also updates the team's foul count. G = goals, A = assists, F = fouls, Y = yellow cards, R = red cards.</p>
-        <div class="stats-columns">
+        <p class="hint">Goals, assists and cards are added automatically by the broadcaster's Goal and Card events. A card also counts as a foul. Use +/- here to record other fouls or fix a mistake. A foul also updates the team's foul count.</p>
+        <div class="stats-columns stacked">
           <div>
             <h3 id="live-stats-home-title">Home</h3>
             <div id="live-stats-home" class="stat-list"></div>
@@ -127,7 +127,7 @@
       </div>
       <label class="check" id="ed-league-row" hidden><input type="checkbox" id="ed-counts" onchange="markDirty()"> Counts towards the league table and player totals</label>
 
-      <div class="stats-columns">
+      <div class="stats-columns stacked">
         <div>
           <h3 id="ed-stats-home-title">Home</h3>
           <div id="ed-stats-home" class="stat-list"></div>

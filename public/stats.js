@@ -11,11 +11,11 @@ let editor = null; // { match, squads, stats, dirty } while a non-live match is 
 let liveKey = null; // changes when a match starts/ends, to refresh the list
 
 const FIELDS = [
-  ['goals', 'G', 'Goals'],
-  ['assists', 'A', 'Assists'],
-  ['fouls', 'F', 'Fouls'],
-  ['yellow_cards', 'Y', 'Yellow cards'],
-  ['red_cards', 'R', 'Red cards'],
+  ['goals', 'Goals'],
+  ['assists', 'Assists'],
+  ['fouls', 'Fouls'],
+  ['yellow_cards', 'Yellow cards'],
+  ['red_cards', 'Red cards'],
 ];
 
 const $ = (id) => document.getElementById(id);
@@ -178,20 +178,29 @@ window.updatePossession = (home) => {
 // ---------------------------------------------------------------------------
 function statRowsHtml(ctx, team, players, stats) {
   if (!players.length) return '<div class="hint">No players</div>';
-  return players
+  // Column titles live in one sticky header row; each player row only holds [-] n [+].
+  const head =
+    '<div class="sg-row sg-head"><span class="sg-name">Player</span>' +
+    FIELDS.map(([f, title]) => `<span class="sg-col col-${f}">${title}</span>`).join('') +
+    '</div>';
+  const rows = players
     .map((p) => {
       const st = stats[String(p.number)] || {};
-      const cells = FIELDS.map(([f, label, title]) => {
+      const cells = FIELDS.map(([f, title]) => {
         const data = `data-ctx="${ctx}" data-team="${team}" data-number="${esc(p.number)}" data-stat="${f}"`;
+        const n = st[f] || 0;
+        const who = `${esc(p.name)} - ${title}`;
         return (
-          `<span class="stat-cell stat-${f}" title="${title}"><span class="lbl">${label}</span>` +
-          `<button ${data} data-delta="-1">-</button><span class="val">${st[f] || 0}</span>` +
-          `<button ${data} data-delta="1">+</button></span>`
+          `<span class="sg-cell col-${f}">` +
+          `<button ${data} data-delta="-1" aria-label="Remove one: ${who}">-</button>` +
+          `<span class="val${n ? '' : ' zero'}">${n}</span>` +
+          `<button ${data} data-delta="1" aria-label="Add one: ${who}">+</button></span>`
         );
       }).join('');
-      return `<div class="stat-row"><span class="stat-name">${esc(p.number)} ${esc(p.name)}</span><span class="stat-cells">${cells}</span></div>`;
+      return `<div class="sg-row"><span class="sg-name"><b>${esc(p.number)}</b> ${esc(p.name)}</span>${cells}</div>`;
     })
     .join('');
+  return head + rows;
 }
 
 // Delegated: the rows are rebuilt whenever stats change.
