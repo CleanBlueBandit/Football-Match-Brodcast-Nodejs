@@ -118,6 +118,16 @@ one after another.
   `STANDINGS_IMPORT=overwrite` to reset standings and player stats to the file's values, or
   `STANDINGS_IMPORT=off` to disable it. You can also run it manually with
   `npm run import:standings [file] [-- --overwrite]`.
+- **Match schedule import:** right after the standings import, the server imports fixtures from
+  `prisma/seed/schedule.json` (override with `SCHEDULE_FILE`; see `prisma/seed/schedule.example.json`
+  for the format). Each entry has `home` and `away` (a team id or team name) and an optional
+  `scheduledAt` (ISO date-time) or `date` + `time`; a time without a UTC offset is read in the
+  server's time zone. Fixtures are identified by home + away + date, so restarting never
+  duplicates them, and only missing ones are created. `SCHEDULE_IMPORT=overwrite` also removes
+  scheduled matches that aren't in the file (live and finished matches, and scheduled matches
+  that already have stats entered, are never touched); `SCHEDULE_IMPORT=off` disables it. An
+  empty `matches` list imports nothing. Run it manually with
+  `npm run import:schedule [file] [-- --overwrite]`.
 - **Excel report:** the **Download Excel** button on the statistics page (or
   `GET /api/export.xlsx` as a statistician/admin) downloads a workbook with a `Teams` sheet
   (standings), a `Players` sheet (every player's season totals, grouped by team), a

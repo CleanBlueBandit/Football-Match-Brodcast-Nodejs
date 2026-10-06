@@ -9,6 +9,7 @@ const pgSessionFactory = require('connect-pg-simple');
 const { prisma, pool } = require('./db/prisma');
 const { setupWebSocket, flushState } = require('./ws');
 const { importStandings } = require('./db/importStandings');
+const { importSchedule } = require('./db/importSchedule');
 const { requirePermission, isLoggedIn } = require('./middleware/auth');
 const { homeFor } = require('./lib/roles');
 const authRoutes = require('./routes/auth');
@@ -76,6 +77,16 @@ app.use(express.static(path.join(__dirname, 'public'), { index: false }));
 const PORT = process.env.PORT || 3000;
 
 async function start() {
+  // Import teams/squads first, then the fixtures that refer to them. A bad file is
+  // logged but never keeps the broadcast server from starting.
+  for (const [label, run] of [['Standings', importStandings], ['Schedule', importSchedule]]) {
+    try {
+      await run();
+    } catch (err) {
+      console.error(`${label} import failed:`, err.message);
+    }
+  }
+
   // Get the league + any live match ready BEFORE accepting connections. Listening
   // first left a window where /ws had no handler, so a page reconnecting after a
   // restart was dropped, and a failure here was an unhandled rejection.

@@ -11,6 +11,7 @@
     "migrate:dev": "prisma migrate dev",
     "seed": "prisma db seed",
     "import:standings": "node db/importStandings.js",
+    "import:schedule": "node db/importSchedule.js",
     "studio": "prisma studio",
     "register": "node register.js"
   },

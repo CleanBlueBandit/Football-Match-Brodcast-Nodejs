@@ -5,13 +5,25 @@ const path = require('path');
 
 const { prisma, pool } = require('./prisma');
 
-const DEFAULT_FILE = path.join(
-  __dirname,
-  '..',
-  'prisma',
-  'seed',
-  'league.json'
-);
+const DATA_DIR = path.join(__dirname, '..', 'data');
+
+/**
+ * Resolve the standings file.
+ *
+ * - Absolute paths are used as-is.
+ * - Bare names / relative paths are looked up inside /data,
+ *   no matter which folder `node` was started from.
+ */
+function resolveStandingsFile(file) {
+  const name =
+    file ||
+    process.env.STANDINGS_FILE ||
+    'league.json';
+
+  return path.isAbsolute(name)
+    ? name
+    : path.join(DATA_DIR, name);
+}
 
 const toInt = (value, fallback = 0) => {
   const n = Number(value);
@@ -252,7 +264,6 @@ async function importOverwrite(teams, players) {
    * This must happen before deleting teams because
    * players reference teams through a foreign key.
    */
-
   const existingPlayers =
     await prisma.player.findMany({
       select: {
@@ -439,11 +450,7 @@ async function importStandings({
     );
   }
 
-  const resolvedFile = path.resolve(
-    file ||
-    process.env.STANDINGS_FILE ||
-    DEFAULT_FILE
-  );
+  const resolvedFile = resolveStandingsFile(file);
 
   if (!fs.existsSync(resolvedFile)) {
     console.warn(
@@ -548,8 +555,10 @@ module.exports = {
  * CLI:
  *
  *   node db/importStandings.js
- *   node db/importStandings.js path/to/standings.json
- *   node db/importStandings.js path/to/standings.json --overwrite
+ *   node db/importStandings.js league.json
+ *   node db/importStandings.js league.json --overwrite
+ *
+ * Bare file names are looked up in /data.
  */
 if (require.main === module) {
   const args =
@@ -559,10 +568,7 @@ if (require.main === module) {
     args.includes('--overwrite');
 
   const file =
-    args.find(
-      (arg) =>
-        !arg.startsWith('--')
-    );
+    args.find((a) => !a.startsWith('--'));
 
   importStandings({
     file,
