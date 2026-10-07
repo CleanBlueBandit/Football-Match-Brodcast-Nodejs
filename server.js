@@ -15,6 +15,7 @@ const { homeFor } = require('./lib/roles');
 const authRoutes = require('./routes/auth');
 const exportRoutes = require('./routes/export');
 const matchRoutes = require('./routes/matches');
+const { cwd } = require('process');
 
 const PgSession = pgSessionFactory(session);
 
@@ -27,7 +28,6 @@ app.use(express.urlencoded({ extended: true }));
 
 
 
-// Shared with the WebSocket server, which uses it to find out who is connecting.
 const sessionMiddleware = session({
   store: new PgSession({ pool, tableName: 'session' }),
   secret: process.env.SESSION_SECRET || 'change_me',
@@ -35,7 +35,7 @@ const sessionMiddleware = session({
   saveUninitialized: false,
   cookie: {
     httpOnly: true,
-    sameSite: 'lax', // also keeps other sites from opening an authenticated WebSocket
+    sameSite: 'lax', 
     secure: process.env.NODE_ENV === 'production',
     maxAge: 1000 * 60 * 60 * 8,
   },
@@ -77,8 +77,7 @@ app.use(express.static(path.join(__dirname, 'public'), { index: false }));
 const PORT = process.env.PORT || 3000;
 
 async function start() {
-  // Import teams/squads first, then the fixtures that refer to them. A bad file is
-  // logged but never keeps the broadcast server from starting.
+
   for (const [label, run] of [['Standings', importStandings], ['Schedule', importSchedule]]) {
     try {
       await run();
@@ -87,9 +86,7 @@ async function start() {
     }
   }
 
-  // Get the league + any live match ready BEFORE accepting connections. Listening
-  // first left a window where /ws had no handler, so a page reconnecting after a
-  // restart was dropped, and a failure here was an unhandled rejection.
+
   await setupWebSocket(server, sessionMiddleware);
   server.listen(PORT, () => {
     console.log(`Broadcast control server listening on port ${PORT}`);
@@ -102,15 +99,14 @@ start().catch((error) => {
 });
 
 async function shutdown() {
-  console.log("Server shutting down...");
-  await flushState(); // keep the live match so it survives the restart
+  console.log("Server shutdown at" + new Date().toLocaleString());
+  await flushState();
   server.close();
   await prisma.$disconnect().catch(() => {});
   await pool.end().catch(() => {});
   process.exit(0);
 }
 process.on('SIGTERM', shutdown);
-// nodemon restarts with SIGUSR2: save the live match, then let it carry on.
 process.once('SIGUSR2', async () => {
   await flushState();
   process.kill(process.pid, 'SIGUSR2');

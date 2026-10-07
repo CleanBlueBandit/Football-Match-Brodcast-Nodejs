@@ -272,21 +272,13 @@
 
     fitScorebugNames();
 
+    // Added time always sits on the top-right corner of the scorebug
     const addEl = document.getElementById('sb-added');
-    const externalTimeEl = document.getElementById('external-time');
-    const externalAddedEl = document.getElementById('external-added');
-    if (!anyOverlayActive && state.match.addedTime > 0) {
-      addEl.style.display = 'none';
-      externalTimeEl.style.display = 'flex';
-      externalAddedEl.textContent = '+' + state.match.addedTime;
+    if (state.match.addedTime > 0) {
+      addEl.textContent = '+' + state.match.addedTime;
+      addEl.style.display = 'block';
     } else {
-      externalTimeEl.style.display = 'none';
-      if (state.match.addedTime > 0) {
-        addEl.textContent = '+' + state.match.addedTime;
-        addEl.style.display = 'inline';
-      } else {
-        addEl.style.display = 'none';
-      }
+      addEl.style.display = 'none';
     }
 
     const g = document.getElementById('goal-overlay');
